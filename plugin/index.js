@@ -4,6 +4,44 @@ global.crypto = crypto;
 
 let MeshDevice, TransportHTTP;
 
+function nodeToSignalK(app, node, nodeInfo) {
+  let context;
+  if (node.thisNode) {
+    context = 'vessels.self';
+  }
+  // TODO: Create context for other nodes
+  // TODO: Associate nodes with AIS vessels if callsign available
+  if (!context) {
+    return;
+  }
+  const values = [
+    {
+      path: 'communication.meshtastic.nodeNum',
+      value: nodeInfo.num,
+    },
+    {
+      path: 'communication.meshtastic.shortName',
+      value: nodeInfo.user.shortName,
+    },
+    {
+      path: 'communication.meshtastic.longName',
+      value: nodeInfo.user.longName,
+    },
+  ];
+  app.handleMessage('signalk-meshtastic', {
+    context,
+    updates: [
+      {
+        source: {
+          label: 'signalk-meshtastic',
+        },
+        timestamp: new Date().toISOString(),
+        values,
+      },
+    ],
+  });
+}
+
 module.exports = (app) => {
   const plugin = {};
   let device;
@@ -74,6 +112,7 @@ module.exports = (app) => {
           nodes[nodeInfo.num].longName = nodeInfo.user.longName;
           nodes[nodeInfo.num].shortName = nodeInfo.user.shortName;
           nodes[nodeInfo.num].seen = new Date();
+          nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo);
           setConnectionStatus();
         });
         device.events.onMeshPacket.subscribe((packet) => {
@@ -106,7 +145,7 @@ module.exports = (app) => {
         oneOf: [
           {
             const: 'http',
-            title: 'HTTP (nodes connected to same WiFi)',
+            title: 'HTTP (nodes connected to same network, typically ESP32)',
           },
         ],
       },
