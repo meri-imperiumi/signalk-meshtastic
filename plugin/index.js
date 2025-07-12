@@ -174,7 +174,8 @@ module.exports = (app) => {
                   device.setPosition(create(Protobuf.Mesh.PositionSchema, {
                     latitude_i: Math.floor(v.value.latitude / 1e-7),
                     longitude_i: Math.floor(v.value.longitude / 1e-7),
-                  }));
+                  }))
+                    .catch((e) => app.error(`Failed to set node position: ${e.message}`));
                 }
               });
             });
