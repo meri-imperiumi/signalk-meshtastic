@@ -1,0 +1,24 @@
+{
+  "name": "@meri-imperiumi/signalk-meshtastic",
+  "version": "1.0.0",
+  "description": "Signal K plugin for interfacing with the Meshtasti LoRa network",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "meshtastic",
+    "signalk-node-server-plugin",
+    "signalk-category-hardware"
+  ],
+  "main": "plugin/index.js",
+  "signalk-plugin-enabled-by-default": false,
+  "author": "Henri Bergius <henri.bergius@iki.fi>",
+  "license": "GPLV3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@meshtastic/core": "npm:@jsr/meshtastic__core@^2.6.4",
+    "@meshtastic/transport-http": "npm:@jsr/meshtastic__transport-http@^0.2.1"
+  }
+}
