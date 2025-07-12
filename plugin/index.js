@@ -2,7 +2,8 @@
 const crypto = require('node:crypto');
 global.crypto = crypto;
 
-let MeshDevice, TransportHTTP;
+// The ES modules we'll need to import
+let MeshDevice, TransportHTTP, create, Protobuf;
 
 function nodeToSignalK(app, node, nodeInfo) {
   let context;
@@ -59,6 +60,14 @@ module.exports = (app) => {
     })
     .then((lib) => {
       TransportHTTP = lib.TransportHTTP;
+      return import('@bufbuild/protobuf');
+    })
+    .then((lib) => {
+      create = lib.create;
+      return import('@meshtastic/protobufs');
+    })
+    .then((lib) => {
+      Protobuf = lib;
       app.setPluginStatus('Meshtastic library loaded');
     })
     .catch((e) => {
@@ -132,7 +141,47 @@ module.exports = (app) => {
       })
       .then(() => {
         app.setPluginStatus(`Connected to Meshtastic node ${settings.address}`);
+
+        // Subscribe to Signal K values we may want to transmit to Meshtastic
+        app.subscriptionmanager.subscribe(
+          {
+            context: 'vessels.self',
+            subscribe: [
+              {
+                path: 'navigation.position',
+                period: 600000,
+              },
+            ],
+          },
+          unsubscribes,
+          (subscriptionError) => {
+            app.error(`Error: ${subscriptionError}`);
+          },
+          (delta) => {
+            if (!delta.updates) {
+              return;
+            }
+            delta.updates.forEach((u) => {
+              if (!u.values) {
+                return;
+              }
+              u.values.forEach((v) => {
+                if (v.path === 'navigation.position') {
+                  if (!device) {
+                    // Not connected to Meshtastic yet
+                    return;
+                  }
+                  device.setPosition(create(Protobuf.Mesh.PositionSchema, {
+                    latitude_i: Math.floor(v.value.latitude / 1e-7),
+                    longitude_i: Math.floor(v.value.longitude / 1e-7),
+                  }));
+                }
+              });
+            });
+          },
+        );
       });
+
   };
   plugin.stop = () => {};
   plugin.schema = {
