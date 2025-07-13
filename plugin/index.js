@@ -188,37 +188,89 @@ module.exports = (app) => {
 
   };
   plugin.stop = () => {};
-  plugin.schema = {
-    type: 'object',
-    properties: {
-      transport: {
-        type: 'string',
-        default: 'http',
-        title: 'How to connect to the boat Meshtastic node',
-        oneOf: [
-          {
-            const: 'http',
-            title: 'HTTP (nodes connected to same network, typically ESP32)',
-          },
-        ],
-      },
-      address: {
-        type: 'string',
-        default: 'meshtastic.local',
-        title: 'Address of the Meshtastic node',
-      },
-      communications: {
-        type: 'object',
-        title: 'Communications with Meshtastic',
-        properties: {
-          send_position: {
-            type: 'boolean',
-            title: 'Update Meshtastic node position from Signal K vessel position',
-            default: true,
-          }
+  plugin.schema = () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        transport: {
+          type: 'string',
+          default: 'http',
+          title: 'How to connect to the boat Meshtastic node',
+          oneOf: [
+            {
+              const: 'http',
+              title: 'HTTP (nodes connected to same network, typically ESP32)',
+            },
+          ],
         },
-      }
-    },
+        address: {
+          type: 'string',
+          default: 'meshtastic.local',
+          title: 'Address of the Meshtastic node',
+        },
+        nodes: {
+          type: 'array',
+          title: 'Related Meshtastic nodes',
+          items: {
+            type: 'object',
+            required: [
+              'node',
+              'role',
+            ],
+            properties: {
+              node: {
+                type: 'integer',
+                title: 'Node',
+                oneOf: Object.keys(nodes)
+                .filter((nodeId) => {
+                  if (nodes[nodeId].thisNode) {
+                    return false;
+                  }
+                  return true;
+                })
+                .map((nodeId) => {
+                  const node = nodes[nodeId];
+                  return {
+                    const: parseInt(nodeId, 10),
+                    title: `${nodeId} ${node.shortName} (${node.longName})`,
+                  };
+                }),
+              },
+              role: {
+                type: 'string',
+                title: 'Role',
+                oneOf: [
+                  {
+                    const: 'crew',
+                    title: 'Node carried by crew member',
+                  },
+                  {
+                    const: 'dinghy',
+                    title: 'Dinghy tracker node',
+                  },
+                  {
+                    const: 'onboard',
+                    title: 'Onboard equipment',
+                  },
+                ],
+              },
+            },
+          },
+        },
+        communications: {
+          type: 'object',
+          title: 'Communications with Meshtastic',
+          properties: {
+            send_position: {
+              type: 'boolean',
+              title: 'Update Meshtastic node position from Signal K vessel position',
+              default: true,
+            }
+          },
+        }
+      },
+    };
+    return schema;
   };
 
   return plugin;
