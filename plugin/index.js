@@ -1,3 +1,6 @@
+const { readFile, writeFile } = require('fs/promises');
+const { join } = require('path');
+
 // Hack for Node.js compatibility of Meshtastic Deno lib
 const crypto = require('node:crypto');
 global.crypto = crypto;
@@ -83,6 +86,8 @@ module.exports = (app) => {
       return;
     }
 
+    const nodeDbFile = join(app.getDataDirPath(), 'node-db.json');
+
     function setConnectionStatus() {
       const now = new Date();
       const nodesOnline = Object.keys(nodes)
@@ -100,9 +105,19 @@ module.exports = (app) => {
       app.setPluginStatus(`Node at ${settings.address} can see ${nodesOnline.length} Meshstastic nodes`);
     }
 
-    app.setPluginStatus(`Connecting to Meshtastic node ${settings.address}`);
-    TransportHTTP
-      .create(settings.address)
+    app.setPluginStatus('Loading Meshtastic node database');
+    readFile(nodeDbFile, 'utf-8')
+      .catch(() => '{}')
+      .then((nodeDb) => {
+        const nodeDbData = JSON.parse(nodeDb);
+        Object.keys(nodeDbData)
+          .forEach((nodeNum) => {
+            nodes[nodeNum] = nodeDbData[nodeNum];
+            nodes[nodeNum].seen = new Date(nodeDbData[nodeNum].seen)
+          });
+        app.setPluginStatus(`Connecting to Meshtastic node ${settings.address}`);
+        return TransportHTTP.create(settings.address)
+      })
       .then((transport) => {
         device = new MeshDevice(transport);
 
@@ -123,6 +138,10 @@ module.exports = (app) => {
           nodes[nodeInfo.num].seen = new Date();
           nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo);
           setConnectionStatus();
+          writeFile(nodeDbFile, JSON.stringify(nodes, null, 2), 'utf-8')
+            .catch((e) => {
+              app.error(`Failed to store node DB: ${e.message}`);
+            });
         });
         device.events.onMeshPacket.subscribe((packet) => {
           if (!nodes[packet.from]) {
