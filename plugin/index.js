@@ -171,6 +171,9 @@ module.exports = (app) => {
                     // Not connected to Meshtastic yet
                     return;
                   }
+                  if (!settings.communications || !settings.communications.send_position) {
+                    return;
+                  }
                   device.setPosition(create(Protobuf.Mesh.PositionSchema, {
                     latitude_i: Math.floor(v.value.latitude / 1e-7),
                     longitude_i: Math.floor(v.value.longitude / 1e-7),
@@ -204,6 +207,17 @@ module.exports = (app) => {
         default: 'meshtastic.local',
         title: 'Address of the Meshtastic node',
       },
+      communications: {
+        type: 'object',
+        title: 'Communications with Meshtastic',
+        properties: {
+          send_position: {
+            type: 'boolean',
+            title: 'Update Meshtastic node position from Signal K vessel position',
+            default: true,
+          }
+        },
+      }
     },
   };
 
