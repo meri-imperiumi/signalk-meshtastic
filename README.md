@@ -16,8 +16,6 @@ Many different kinds of Meshtastic devices are available, from basic microcontro
 > - Boat Node receives it and decides, “This is new—let’s pass it on!”
 > - Boat Node rebroadcasts the message.
 > - Parents’ node, unable to hear the kids directly, receives it through Boat Node.
-> - If another node rebroadcasts the same message, other nodes ignore it—they’ve seen it before!
-> This “flooding” approach means messages traverse all possible paths through the network, ensuring they arrive as long as there’s a link between nodes, even if locations shift.
 
 ## Features
 
