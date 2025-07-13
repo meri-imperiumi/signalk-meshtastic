@@ -1,9 +1,23 @@
 Signal K integration with Meshtastic
 ====================================
 
-This plugin enables vessels running [Signal K](https://signalk.org) to interact with the [Meshtastic](https://meshtastic.org) mesh network. Meshtastic allows radio communications between relatively inexpensive LoRa devices over long distances. Being a mesh network, there is no need for external telecommunications infrastructure or monthly payments. This means communication between Meshtastic devices onboard and on shore can work just as well in the Finnish Archipelago Sea as in the Tuamotus. In more densely populated places communications may benefit from other Meshtastic users relaying the messages, making it possible to communicate with the boat from for example across a city.
+This plugin enables vessels running [Signal K](https://signalk.org) to interact with the [Meshtastic](https://meshtastic.org) mesh network. Meshtastic allows radio communications between relatively inexpensive LoRa devices over long distances.
+
+Being a mesh network, there is no need for external telecommunications infrastructure or monthly payments. This means communication between Meshtastic devices onboard and on shore can work just as well in the Finnish Archipelago Sea as in the Tuamotus. In more densely populated places communications may benefit from other Meshtastic users relaying the messages, making it possible to communicate with the boat from for example across a city.
 
 This plugin is designed to work with regular unmodified Meshtastic devices and settings. You can keep your boat and other Meshtastic nodes either in the public channel, or [set up your private mesh](https://meshtastic.org/docs/configuration/tips/#creating-a-private-primary-with-default-secondary).
+
+Many different kinds of Meshtastic devices are available, from basic microcontroller boards to ready-to-go consumer devices. Some are entirely standalone with screens and keyboards, and others need a smartphone app.
+
+[Here is a good introduction](https://tech.gillyb.net/understanding-meshtastic-off-grid-communication-made-simple/) to Meshtastic:
+> Picture this: you’re a family is anchored in a bay. Parents are hiking inland, kids are visiting friends on another boat, and you’re on your boat (“Boat Node”) in the middle. When the kids send, “What’s for dinner?”, Meshtastic uses “flood routing” to make sure it reaches everyone.
+> Here’s how it works:
+> - The kids’ node sends the message.
+> - Boat Node receives it and decides, “This is new—let’s pass it on!”
+> - Boat Node rebroadcasts the message.
+> - Parents’ node, unable to hear the kids directly, receives it through Boat Node.
+> - If another node rebroadcasts the same message, other nodes ignore it—they’ve seen it before!
+> This “flooding” approach means messages traverse all possible paths through the network, ensuring they arrive as long as there’s a link between nodes, even if locations shift.
 
 ## Features
 
