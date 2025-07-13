@@ -23,6 +23,7 @@ Many different kinds of Meshtastic devices are available, from basic microcontro
 * Keep a persistent database of all seen Meshtastic nodes
 * Update Meshtastic node position from Signal K GNSS position
 * Send Signal K alerts as Meshtastic text messages to crew
+* Sharing weather station data from Signal K (wind, temperature, etc) over Meshtastic
 
 ## Planned features
 
@@ -30,7 +31,6 @@ Many different kinds of Meshtastic devices are available, from basic microcontro
 * Alerts for crew or dighy tracker devices running low on battery
 * Basic text commands over Meshtastic to query vessel status or for example to flip digital switches (_"Boat, turn deck light on"_)
 * Keeping a mileage log for the dinghy
-* Sharing weather station data from Signal K (wind, temperature, etc) over Meshtastic
 * Associating Meshtastic nodes with other (AIS) vessels
 
 ## Requirements

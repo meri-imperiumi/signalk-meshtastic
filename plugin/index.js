@@ -51,6 +51,8 @@ module.exports = (app) => {
   let device;
   let unsubscribes = [];
   const nodes = {};
+  const telemetry = {};
+  let publishInterval;
   plugin.id = 'signalk-meshtastic';
   plugin.name = 'Meshtastic';
   plugin.description = 'Connect Signal K with the Meshtastic LoRa mesh network';
@@ -76,7 +78,7 @@ module.exports = (app) => {
     })
     .catch((e) => {
       app.setPluginError(`Failed to load Meshtastic library: ${e.message}`);
-    });;
+    });
 
   plugin.start = (settings) => {
     if (!TransportHTTP) {
@@ -88,6 +90,51 @@ module.exports = (app) => {
     }
 
     const nodeDbFile = join(app.getDataDirPath(), 'node-db.json');
+
+    publishInterval = setInterval(() => {
+      if (!device) {
+        // Not connected to Meshtastic yet
+        return;
+      }
+      if (!settings.communications || !settings.communications.send_environment_metrics) {
+        return;
+      }
+      const values = {};
+      if (telemetry['environment.outside.temperature']) {
+        values.temperature = telemetry['environment.outside.temperature'] - 273.15;
+      }
+      if (telemetry['environment.outside.pressure']) {
+        values.barometricPressure = telemetry['environment.outside.pressure'] / 100;
+      }
+      if (telemetry['environment.wind.directionTrue']) {
+        values.windDirection = Math.floor(telemetry['environment.wind.directionTrue'] * (180/Math.PI));
+      }
+      if (telemetry['environment.wind.speedOverGround']) {
+        values.windSpeed = telemetry['environment.wind.speedOverGround'];
+      }
+      if (telemetry['electrical.batteries.house.voltage']) {
+        values.voltage = telemetry['electrical.batteries.house.voltage'];
+      }
+      if (telemetry['electrical.batteries.house.current']) {
+        values.current = telemetry['electrical.batteries.house.current'] * 1000;
+      }
+      if (Object.keys(values).length === 0) {
+        return;
+      }
+      const telemetryMessage = create(Protobuf.Telemetry.TelemetrySchema, {
+        variant: {
+          case: 'environmentMetrics',
+          value: create(Protobuf.Telemetry.EnvironmentMetricsSchema, values),
+        },
+      });
+      device.sendPacket(
+        toBinary(Protobuf.Telemetry.TelemetrySchema, telemetryMessage),
+        Protobuf.Portnums.PortNum.TELEMETRY_APP,
+        'broadcast',
+      )
+        .catch((e) => app.error(`Failed to send telemetry: ${e.message}`));
+
+    }, 60000);
 
     function setConnectionStatus() {
       const now = new Date();
@@ -165,6 +212,30 @@ module.exports = (app) => {
                 path: 'notifications.*',
                 policy: 'instant',
               },
+              {
+                path: 'environment.outside.temperature',
+                period: 1000,
+              },
+              {
+                path: 'environment.outside.pressure',
+                period: 1000,
+              },
+              {
+                path: 'environment.wind.directionTrue',
+                period: 1000,
+              },
+              {
+                path: 'environment.wind.speedOverGround',
+                period: 1000,
+              },
+              {
+                path: 'electrical.batteries.house.voltage',
+                period: 1000,
+              },
+              {
+                path: 'electrical.batteries.house.current',
+                period: 1000,
+              },
             ],
           },
           unsubscribes,
@@ -228,7 +299,10 @@ module.exports = (app) => {
                       return device.sendText(v.value.message, member.node, true, false);
                     });
                   }, Promise.resolve());
+                  return;
                 }
+                // The others go to the telemetry object
+                telemetry[v.path] = v.value;
               });
             });
           },
@@ -247,7 +321,13 @@ module.exports = (app) => {
       });
 
   };
-  plugin.stop = () => {};
+  plugin.stop = () => {
+    if (publishInterval) {
+      clearInterval(publishInterval);
+    }
+    unsubscribes.forEach((f) => f());
+    unsubscribes = [];
+  };
   plugin.schema = () => {
     const schema = {
       type: 'object',
@@ -330,7 +410,12 @@ module.exports = (app) => {
               type: 'boolean',
               title: 'Send alerts to crew via Meshtastic',
               default: true,
-            }
+            },
+            send_environment_metrics: {
+              type: 'boolean',
+              title: 'Send environment metrics (wind, temperature, etc) to Meshtastic',
+              default: true,
+            },
           },
         }
       },
