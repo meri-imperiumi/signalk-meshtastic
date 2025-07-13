@@ -150,7 +150,7 @@ module.exports = (app) => {
           }
           return false;
         });
-      app.setPluginStatus(`Node at ${settings.address} can see ${nodesOnline.length} Meshstastic nodes`);
+      app.setPluginStatus(`Node at ${settings.device.address} can see ${nodesOnline.length} Meshstastic nodes`);
     }
 
     app.setPluginStatus('Loading Meshtastic node database');
@@ -163,8 +163,8 @@ module.exports = (app) => {
             nodes[nodeNum] = nodeDbData[nodeNum];
             nodes[nodeNum].seen = new Date(nodeDbData[nodeNum].seen)
           });
-        app.setPluginStatus(`Connecting to Meshtastic node ${settings.address}`);
-        return TransportHTTP.create(settings.address)
+        app.setPluginStatus(`Connecting to Meshtastic node ${settings.device.address}`);
+        return TransportHTTP.create(settings.device.address)
       })
       .then((transport) => {
         device = new MeshDevice(transport);
@@ -351,6 +351,7 @@ module.exports = (app) => {
           },
         );
 
+        device.log.settings.minLevel = settings.device.log_level;
         return device.configure()
       })
       .catch((e) => {
@@ -359,7 +360,7 @@ module.exports = (app) => {
         return;
       })
       .then(() => {
-        app.setPluginStatus(`Connected to Meshtastic node ${settings.address}`);
+        app.setPluginStatus(`Connected to Meshtastic node ${settings.device.address}`);
 
       });
 
@@ -372,28 +373,59 @@ module.exports = (app) => {
     unsubscribes = [];
   };
   plugin.schema = () => {
+    function nodeList() {
+      if (Object.keys(nodes).length === 0) {
+        return;
+      }
+      return Object.keys(nodes)
+        .filter((nodeId) => {
+          if (nodes[nodeId].thisNode) {
+            return false;
+          }
+          return true;
+        })
+        .map((nodeId) => {
+          const node = nodes[nodeId];
+          return {
+            const: parseInt(nodeId, 10),
+            title: `${nodeId} ${node.shortName} (${node.longName})`,
+          };
+        });
+    }
     const schema = {
       type: 'object',
       properties: {
-        transport: {
-          type: 'string',
-          default: 'http',
-          title: 'How to connect to the boat Meshtastic node',
-          oneOf: [
-            {
-              const: 'http',
-              title: 'HTTP (nodes connected to same network, typically ESP32)',
+        device: {
+          type: 'object',
+          title: 'Meshtastic device connection settings',
+          properties: {
+            transport: {
+              type: 'string',
+              default: 'http',
+              title: 'How to connect to the boat Meshtastic node',
+              oneOf: [
+                {
+                  const: 'http',
+                  title: 'HTTP (nodes connected to same network, typically ESP32)',
+                },
+              ],
             },
-          ],
-        },
-        address: {
-          type: 'string',
-          default: 'meshtastic.local',
-          title: 'Address of the Meshtastic node',
+            address: {
+              type: 'string',
+              default: 'meshtastic.local',
+              title: 'Address of the Meshtastic node',
+            },
+            log_level: {
+              type: 'integer',
+              default: 6,
+              title: 'Meshtastic log level',
+            }
+          },
         },
         nodes: {
           type: 'array',
           title: 'Related Meshtastic nodes',
+          minItems: 0,
           items: {
             type: 'object',
             required: [
@@ -404,20 +436,7 @@ module.exports = (app) => {
               node: {
                 type: 'integer',
                 title: 'Node',
-                oneOf: Object.keys(nodes)
-                .filter((nodeId) => {
-                  if (nodes[nodeId].thisNode) {
-                    return false;
-                  }
-                  return true;
-                })
-                .map((nodeId) => {
-                  const node = nodes[nodeId];
-                  return {
-                    const: parseInt(nodeId, 10),
-                    title: `${nodeId} ${node.shortName} (${node.longName})`,
-                  };
-                }),
+                oneOf: nodeList(),
               },
               role: {
                 type: 'string',
