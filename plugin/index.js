@@ -151,16 +151,6 @@ module.exports = (app) => {
           setConnectionStatus();
         });
 
-        return device.configure()
-      })
-      .catch((e) => {
-        // Configure often times out, we can ignore it
-        console.log(e);
-        return;
-      })
-      .then(() => {
-        app.setPluginStatus(`Connected to Meshtastic node ${settings.address}`);
-
         // Subscribe to Signal K values we may want to transmit to Meshtastic
         app.subscriptionmanager.subscribe(
           {
@@ -169,6 +159,10 @@ module.exports = (app) => {
               {
                 path: 'navigation.position',
                 period: 600000,
+              },
+              {
+                path: 'notifications.*',
+                policy: 'instant',
               },
             ],
           },
@@ -198,11 +192,47 @@ module.exports = (app) => {
                     longitude_i: Math.floor(v.value.longitude / 1e-7),
                   }))
                     .catch((e) => app.error(`Failed to set node position: ${e.message}`));
+                  return;
+                }
+                if (v.path.indexOf('notifications.') === 0) {
+                  if (!device) {
+                    // Not connected to Meshtastic yet
+                    return;
+                  }
+                  if (!settings.communications || !settings.communications.send_alerts) {
+                    return;
+                  }
+                  if (!v.value) {
+                    return;
+                  }
+                  if (!v.value.state || ['alarm', 'emergency'].indexOf(v.value.state) === -1) {
+                    return;
+                  }
+                  const crew = settings.nodes.filter((node) => node.role === 'crew');
+                  if (!crew.length) {
+                    return;
+                  }
+                  crew.reduce((prev, member) => {
+                    return prev.then(() => {
+                      return device.sendText(v.value.message, member.node, true, false);
+                    });
+                  }, Promise.resolve());
                 }
               });
             });
           },
         );
+
+        return device.configure()
+      })
+      .catch((e) => {
+        // Configure often times out, we can ignore it
+        console.log(e);
+        return;
+      })
+      .then(() => {
+        app.setPluginStatus(`Connected to Meshtastic node ${settings.address}`);
+
       });
 
   };
@@ -283,6 +313,11 @@ module.exports = (app) => {
             send_position: {
               type: 'boolean',
               title: 'Update Meshtastic node position from Signal K vessel position',
+              default: true,
+            },
+            send_alerts: {
+              type: 'boolean',
+              title: 'Send alerts to crew via Meshtastic',
               default: true,
             }
           },
