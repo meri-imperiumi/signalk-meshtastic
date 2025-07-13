@@ -24,14 +24,15 @@ Many different kinds of Meshtastic devices are available, from basic microcontro
 * Update Meshtastic node position from Signal K GNSS position
 * Send Signal K alerts as Meshtastic text messages to crew
 * Sharing weather station data from Signal K (wind, temperature, etc) over Meshtastic
+* Ability to control digital switching via Meshtastic direct messages (_"Turn decklight on"_)
 
 ## Planned features
 
 * Guard mode to alert if the tracked dinghy moves
 * Alerts for crew or dighy tracker devices running low on battery
-* Basic text commands over Meshtastic to query vessel status or for example to flip digital switches (_"Boat, turn deck light on"_)
 * Keeping a mileage log for the dinghy
 * Associating Meshtastic nodes with other (AIS) vessels
+* More text commands over Meshtastic to query vessel status etc
 
 ## Requirements
 

@@ -198,6 +198,45 @@ module.exports = (app) => {
           nodes[packet.from].seen = new Date();
           setConnectionStatus();
         });
+        device.events.onMessagePacket.subscribe((message) => {
+          console.log(message);
+          if (message.type !== 'direct') {
+            // Not DM
+            return;
+          }
+          const crew = settings.nodes
+            .filter((node) => {
+              if (node.role === 'crew') {
+                return true;
+              }
+              return false;
+            })
+            .map((node) => {
+              return node.node;
+            });
+          if (crew.indexOf(message.from) === -1) {
+            // Not from crew
+            return;
+          }
+          const switching = message.data.match(/turn ([a-z0-9]+) (on|off)/i);
+          if (settings.communications
+            && settings.communications.digital_switching
+            && switching) {
+            const light = switching[1];
+            const value = switching[2] === 'on';
+            app.putSelfPath(`electrical.switches.${light}.state`, value, (res) => {
+              if (res.state !== 'COMPLETED') {
+                return;
+              }
+              if (res.statusCode !== 200) {
+                device.sendText(res.message, message.from, true, false);
+                return;
+              }
+              device.sendText(`OK, ${light} is ${switching[2]}`, message.from, true, false);
+              return;
+            });
+          }
+        });
 
         // Subscribe to Signal K values we may want to transmit to Meshtastic
         app.subscriptionmanager.subscribe(
@@ -234,6 +273,10 @@ module.exports = (app) => {
               },
               {
                 path: 'electrical.batteries.house.current',
+                period: 1000,
+              },
+              {
+                path: 'navigation.anchor.distanceFromBow',
                 period: 1000,
               },
             ],
@@ -414,7 +457,14 @@ module.exports = (app) => {
             send_environment_metrics: {
               type: 'boolean',
               title: 'Send environment metrics (wind, temperature, etc) to Meshtastic',
-              default: true,
+              default: false,
+            },
+            digital_switching: {
+              type: 'boolean',
+              title: 'Allow crew members to change digital switch status by Meshtastic message ("turn decklight on")',
+              default: false,
+
+
             },
           },
         }
