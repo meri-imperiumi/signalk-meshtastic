@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 global.crypto = crypto;
 
 // The ES modules we'll need to import
-let MeshDevice, TransportHTTP, create, Protobuf;
+let MeshDevice, TransportHTTP, create, toBinary, Protobuf;
 
 function nodeToSignalK(app, node, nodeInfo) {
   let context;
@@ -67,6 +67,7 @@ module.exports = (app) => {
     })
     .then((lib) => {
       create = lib.create;
+      toBinary = lib.toBinary;
       return import('@meshtastic/protobufs');
     })
     .then((lib) => {
@@ -187,10 +188,20 @@ module.exports = (app) => {
                   if (!settings.communications || !settings.communications.send_position) {
                     return;
                   }
-                  device.setPosition(create(Protobuf.Mesh.PositionSchema, {
-                    latitude_i: Math.floor(v.value.latitude / 1e-7),
-                    longitude_i: Math.floor(v.value.longitude / 1e-7),
-                  }))
+                  const setPositionMessage = create(Protobuf.Admin.AdminMessageSchema, {
+                    payloadVariant: {
+                      case: 'setFixedPosition',
+                      value: create(Protobuf.Mesh.PositionSchema, {
+                        latitudeI: Math.floor(v.value.latitude / 1e-7),
+                        longitudeI: Math.floor(v.value.longitude / 1e-7),
+                      }),
+                    },
+                  });
+                  device.sendPacket(
+                    toBinary(Protobuf.Admin.AdminMessageSchema, setPositionMessage),
+                    Protobuf.Portnums.PortNum.ADMIN_APP,
+                    'self',
+                  )
                     .catch((e) => app.error(`Failed to set node position: ${e.message}`));
                   return;
                 }

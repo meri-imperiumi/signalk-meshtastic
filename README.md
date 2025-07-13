@@ -21,6 +21,7 @@ Many different kinds of Meshtastic devices are available, from basic microcontro
 
 * Connect to a Meshtastic node
 * Keep a persistent database of all seen Meshtastic nodes
+* Update Meshtastic node position from Signal K GNSS position
 * Send Signal K alerts as Meshtastic text messages to crew
 
 ## Planned features
