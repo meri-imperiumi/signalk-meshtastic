@@ -139,7 +139,7 @@ module.exports = (app) => {
       )
         .catch((e) => app.error(`Failed to send telemetry: ${e.message}`));
 
-    }, 60000);
+    }, 60000 * 5);
 
     function setConnectionStatus() {
       const now = new Date();
