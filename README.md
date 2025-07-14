@@ -17,14 +17,18 @@ Many different kinds of Meshtastic devices are available, from basic microcontro
 > - Boat Node rebroadcasts the message.
 > - Parents’ node, unable to hear the kids directly, receives it through Boat Node.
 
+## Status
+
+Mostly works. Installation is a bit rough as you need to [enable JSR registry for NPM](https://jsr.io/docs/npm-compatibility#advanced-setup).
+
 ## Features
 
 * Connect to a Meshtastic node
 * Keep a persistent database of all seen Meshtastic nodes
 * Update Meshtastic node position from Signal K GNSS position
 * Send Signal K alerts as Meshtastic text messages to crew
-* Sharing weather station data from Signal K (wind, temperature, etc) over Meshtastic
-* Ability to control digital switching via Meshtastic direct messages (_"Turn decklight on"_)
+* Sharing weather station data from Signal K (wind, temperature, etc) over Meshtastic. Opt-in.
+* Ability to control digital switching via Meshtastic direct messages (_"Turn decklight on"_). Opt-in.
 
 ## Planned features
 
