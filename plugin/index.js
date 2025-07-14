@@ -136,6 +136,9 @@ module.exports = (app) => {
         toBinary(Protobuf.Telemetry.TelemetrySchema, telemetryMessage),
         Protobuf.Portnums.PortNum.TELEMETRY_APP,
         'broadcast',
+        0,
+        true,
+        false,
       )
         .catch((e) => app.error(`Failed to send telemetry: ${e.message}`));
 
