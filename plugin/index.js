@@ -118,6 +118,10 @@ module.exports = (app) => {
       if (telemetry['electrical.batteries.house.current']) {
         values.current = telemetry['electrical.batteries.house.current'] * 1000;
       }
+      if (telemetry['navigation.anchor.distanceFromBow']) {
+        // Using distance is a bit silly here as the unit is mm, but what can we do
+        values.distance = telemetry['navigation.anchor.distanceFromBow'] * 1000;
+      }
       if (Object.keys(values).length === 0) {
         return;
       }
