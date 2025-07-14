@@ -234,10 +234,12 @@ module.exports = (app) => {
                 return;
               }
               if (res.statusCode !== 200) {
-                device.sendText(res.message, message.from, true, false);
+                device.sendText(res.message, message.from, true, false)
+                  .catch((e) => app.error(`Failed to send message: ${e.message}`));
                 return;
               }
-              device.sendText(`OK, ${light} is ${switching[2]}`, message.from, true, false);
+              device.sendText(`OK, ${light} is ${switching[2]}`, message.from, true, false)
+                .catch((e) => app.error(`Failed to send message: ${e.message}`));
               return;
             });
           }
@@ -346,7 +348,8 @@ module.exports = (app) => {
                     return prev.then(() => {
                       return device.sendText(`\u0007 ${v.value.message}`, member.node, true, false);
                     });
-                  }, Promise.resolve());
+                  }, Promise.resolve())
+                    .catch((e) => app.error(`Failed to send alert: ${e.message}`));
                   return;
                 }
                 // The others go to the telemetry object
@@ -361,12 +364,11 @@ module.exports = (app) => {
       })
       .catch((e) => {
         // Configure often times out, we can ignore it
-        console.log(e);
+        console.log(`Failed to connect: ${e.message}`);
         return;
       })
       .then(() => {
         app.setPluginStatus(`Connected to Meshtastic node ${settings.device.address}`);
-
       });
 
   };
