@@ -27,8 +27,8 @@ Mostly works. Installation is a bit rough as you need to [enable JSR registry fo
 * Keep a persistent database of all seen Meshtastic nodes
 * Update Meshtastic node position from Signal K GNSS position
 * Send Signal K alerts as Meshtastic text messages to crew
-* Sharing weather station data from Signal K (wind, temperature, etc) over Meshtastic. Opt-in.
-* Ability to control digital switching via Meshtastic direct messages (_"Turn decklight on"_). Opt-in.
+* Share weather station data from Signal K (wind, temperature, etc) over Meshtastic. Opt-in.
+* Control digital switching via Meshtastic direct messages (_"Turn decklight on"_). Opt-in.
 
 ## Planned features
 
