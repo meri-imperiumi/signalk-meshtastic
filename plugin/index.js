@@ -32,6 +32,7 @@ function nodeToSignalK(app, node, nodeInfo) {
       value: nodeInfo.user.longName,
     },
   ];
+
   app.handleMessage('signalk-meshtastic', {
     context,
     updates: [
@@ -343,7 +344,7 @@ module.exports = (app) => {
                   }
                   crew.reduce((prev, member) => {
                     return prev.then(() => {
-                      return device.sendText(v.value.message, member.node, true, false);
+                      return device.sendText(`\u0007 ${v.value.message}`, member.node, true, false);
                     });
                   }, Promise.resolve());
                   return;
