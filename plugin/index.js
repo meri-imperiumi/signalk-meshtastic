@@ -1,12 +1,18 @@
+/* eslint import/no-unresolved: 1 */
 const { readFile, writeFile } = require('fs/promises');
 const { join } = require('path');
 
 // Hack for Node.js compatibility of Meshtastic Deno lib
 const crypto = require('node:crypto');
+
 global.crypto = crypto;
 
 // The ES modules we'll need to import
-let MeshDevice, TransportHTTP, create, toBinary, Protobuf;
+let MeshDevice;
+let TransportHTTP;
+let create;
+let toBinary;
+let Protobuf;
 
 function nodeToSignalK(app, node, nodeInfo) {
   let context;
@@ -108,7 +114,7 @@ module.exports = (app) => {
         values.barometricPressure = telemetry['environment.outside.pressure'] / 100;
       }
       if (telemetry['environment.wind.directionTrue']) {
-        values.windDirection = Math.floor(telemetry['environment.wind.directionTrue'] * (180/Math.PI));
+        values.windDirection = Math.floor(telemetry['environment.wind.directionTrue'] * (180 / Math.PI));
       }
       if (telemetry['environment.wind.speedOverGround']) {
         values.windSpeed = telemetry['environment.wind.speedOverGround'];
@@ -141,7 +147,6 @@ module.exports = (app) => {
         false,
       )
         .catch((e) => app.error(`Failed to send telemetry: ${e.message}`));
-
     }, 60000 * 5);
 
     function setConnectionStatus() {
@@ -159,6 +164,23 @@ module.exports = (app) => {
           return false;
         });
       app.setPluginStatus(`Node at ${settings.device.address} can see ${nodesOnline.length} Meshstastic nodes`);
+      app.handleMessage('signalk-meshtastic', {
+        context: 'vessels.self',
+        updates: [
+          {
+            source: {
+              label: 'signalk-meshtastic',
+            },
+            timestamp: new Date().toISOString(),
+            values: [
+              {
+                path: 'communication.meshtastic.nodesVisible',
+                value: nodesOnline.length,
+              },
+            ],
+          },
+        ],
+      });
     }
 
     app.setPluginStatus('Loading Meshtastic node database');
@@ -169,10 +191,10 @@ module.exports = (app) => {
         Object.keys(nodeDbData)
           .forEach((nodeNum) => {
             nodes[nodeNum] = nodeDbData[nodeNum];
-            nodes[nodeNum].seen = new Date(nodeDbData[nodeNum].seen)
+            nodes[nodeNum].seen = new Date(nodeDbData[nodeNum].seen);
           });
         app.setPluginStatus(`Connecting to Meshtastic node ${settings.device.address}`);
-        return TransportHTTP.create(settings.device.address)
+        return TransportHTTP.create(settings.device.address);
       })
       .then((transport) => {
         device = new MeshDevice(transport);
@@ -185,7 +207,6 @@ module.exports = (app) => {
           setConnectionStatus();
         });
         device.events.onNodeInfoPacket.subscribe((nodeInfo) => {
-          console.log(nodeInfo);
           if (!nodes[nodeInfo.num]) {
             nodes[nodeInfo.num] = {};
           }
@@ -207,7 +228,6 @@ module.exports = (app) => {
           setConnectionStatus();
         });
         device.events.onMessagePacket.subscribe((message) => {
-          console.log(message);
           if (message.type !== 'direct') {
             // Not DM
             return;
@@ -219,9 +239,7 @@ module.exports = (app) => {
               }
               return false;
             })
-            .map((node) => {
-              return node.node;
-            });
+            .map((node) => node.node);
           if (crew.indexOf(message.from) === -1) {
             // Not from crew
             return;
@@ -243,7 +261,6 @@ module.exports = (app) => {
               }
               device.sendText(`OK, ${light} is ${switching[2]}`, message.from, true, false)
                 .catch((e) => app.error(`Failed to send message: ${e.message}`));
-              return;
             });
           }
         });
@@ -347,11 +364,10 @@ module.exports = (app) => {
                   if (!crew.length) {
                     return;
                   }
-                  crew.reduce((prev, member) => {
-                    return prev.then(() => {
-                      return device.sendText(`\u0007 ${v.value.message}`, member.node, true, false);
-                    });
-                  }, Promise.resolve())
+                  crew.reduce(
+                    (prev, member) => prev.then(() => device.sendText(`\u0007 ${v.value.message}`, member.node, true, false)),
+                    Promise.resolve(),
+                  )
                     .catch((e) => app.error(`Failed to send alert: ${e.message}`));
                   return;
                 }
@@ -363,17 +379,15 @@ module.exports = (app) => {
         );
 
         device.log.settings.minLevel = settings.device.log_level;
-        return device.configure()
+        return device.configure();
       })
       .catch((e) => {
         // Configure often times out, we can ignore it
-        console.log(`Failed to connect: ${e.message}`);
-        return;
+        app.error(`Failed to connect: ${e.message}`);
       })
       .then(() => {
         app.setPluginStatus(`Connected to Meshtastic node ${settings.device.address}`);
       });
-
   };
   plugin.stop = () => {
     if (publishInterval) {
@@ -385,7 +399,7 @@ module.exports = (app) => {
   plugin.schema = () => {
     function nodeList() {
       if (Object.keys(nodes).length === 0) {
-        return;
+        return undefined;
       }
       return Object.keys(nodes)
         .filter((nodeId) => {
@@ -429,7 +443,7 @@ module.exports = (app) => {
               type: 'integer',
               default: 6,
               title: 'Meshtastic log level',
-            }
+            },
           },
         },
         nodes: {
@@ -492,11 +506,9 @@ module.exports = (app) => {
               type: 'boolean',
               title: 'Allow crew members to change digital switch status by Meshtastic message ("turn decklight on")',
               default: false,
-
-
             },
           },
-        }
+        },
       },
     };
     return schema;
