@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Signal K plugin for interfacing with the Meshtasti LoRa network",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "eslint ."
   },
   "keywords": [
     "meshtastic",
@@ -22,5 +22,10 @@
     "@meshtastic/core": "npm:@jsr/meshtastic__core@^2.6.4",
     "@meshtastic/protobufs": "npm:@jsr/meshtastic__protobufs@^2.7.0",
     "@meshtastic/transport-http": "npm:@jsr/meshtastic__transport-http@^0.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.32.0"
   }
 }
