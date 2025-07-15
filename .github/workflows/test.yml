@@ -1,0 +1,29 @@
+name: Node CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Run test suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+    - uses: actions/checkout@v3.0.2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3.1.1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm install
+    - run: npm test
+      env:
+        CI: true
+  merge-me:
+    name: Auto-merge dependency updates
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: ridedott/merge-me-action@v2.10.8
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
