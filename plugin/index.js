@@ -14,6 +14,15 @@ let create;
 let toBinary;
 let Protobuf;
 
+function median(arr) {
+  if (!arr.length) {
+    return undefined;
+  }
+  const s = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : ((s[mid - 1] + s[mid]) / 2);
+}
+
 function nodeToSignalK(app, node, nodeInfo) {
   let context;
   if (node.thisNode) {
@@ -119,8 +128,16 @@ module.exports = (app) => {
       if (telemetry['environment.wind.directionTrue']) {
         values.windDirection = Math.floor(telemetry['environment.wind.directionTrue'] * (180 / Math.PI));
       }
-      if (telemetry['environment.wind.speedOverGround']) {
-        values.windSpeed = telemetry['environment.wind.speedOverGround'];
+      if (telemetry['environment.wind.speedOverGround'] && telemetry['environment.wind.speedOverGround'].length) {
+        values.windSpeed = median(telemetry['environment.wind.speedOverGround']);
+        values.windGust = telemetry['environment.wind.speedOverGround'].reduce((prev, current) => (current > prev ? current : prev), 0);
+        values.windLull = telemetry['environment.wind.speedOverGround'].reduce((prev, current) => {
+          if (!prev) {
+            return current;
+          }
+          return current < prev ? current : prev;
+        }, 0);
+        telemetry['environment.wind.speedOverGround'] = [];
       }
       if (telemetry['electrical.batteries.house.voltage']) {
         values.voltage = telemetry['electrical.batteries.house.voltage'];
@@ -379,6 +396,13 @@ module.exports = (app) => {
                     Promise.resolve(),
                   )
                     .catch((e) => app.error(`Failed to send alert: ${e.message}`));
+                  return;
+                }
+                if (v.path === 'environment.wind.speedOverGround') {
+                  if (!telemetry['environment.wind.speedOverGround']) {
+                    telemetry['environment.wind.speedOverGround'] = [];
+                  }
+                  telemetry['environment.wind.speedOverGround'].push(v.value);
                   return;
                 }
                 // The others go to the telemetry object
