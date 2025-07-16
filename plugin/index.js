@@ -349,6 +349,9 @@ module.exports = (app) => {
                     toBinary(Protobuf.Admin.AdminMessageSchema, setPositionMessage),
                     Protobuf.Portnums.PortNum.ADMIN_APP,
                     'self',
+                    0,
+                    true,
+                    false,
                   )
                     .catch((e) => app.error(`Failed to set node position: ${e.message}`));
                   return;
