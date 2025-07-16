@@ -110,6 +110,9 @@ module.exports = (app) => {
       if (telemetry['environment.outside.temperature']) {
         values.temperature = telemetry['environment.outside.temperature'] - 273.15;
       }
+      if (telemetry['environment.outside.relativeHumidity']) {
+        values.relativeHumidity = telemetry['environment.outside.relativeHumidity'] * 100;
+      }
       if (telemetry['environment.outside.pressure']) {
         values.barometricPressure = telemetry['environment.outside.pressure'] / 100;
       }
@@ -280,6 +283,10 @@ module.exports = (app) => {
               },
               {
                 path: 'environment.outside.temperature',
+                period: 1000,
+              },
+              {
+                path: 'environment.outside.relativeHumidity',
                 period: 1000,
               },
               {
