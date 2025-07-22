@@ -23,7 +23,7 @@ function median(arr) {
   return s.length % 2 ? s[mid] : ((s[mid - 1] + s[mid]) / 2);
 }
 
-function getNodeContext(app, node) {
+function getNodeContext(app, node, nodeNum) {
   if (node.thisNode) {
     return 'vessels.self';
   }
@@ -50,12 +50,15 @@ function getNodeContext(app, node) {
         return false;
       });
   }
-  // TODO Make vessels/other targets for non-boat nodes
-  return null;
+  if (!nodeNum) {
+    return null;
+  }
+  // Make vessels/other targets for non-boat nodes
+  return `meshtastic.urn:meshtastic:node:${nodeNum}`;
 }
 
 function nodeToSignalK(app, node, nodeInfo) {
-  const context = getNodeContext(app, node);
+  const context = getNodeContext(app, node, nodeInfo.num);
   if (!context) {
     return;
   }
@@ -73,6 +76,15 @@ function nodeToSignalK(app, node, nodeInfo) {
       value: nodeInfo.user.longName,
     },
   ];
+
+  if (context.indexOf('mestastic.urn') === 0) {
+    // This is a purely Meshtastic node so we inject additional data to "vesselify" it
+    values.push({
+      path: 'name',
+      value: nodeInfo.user.longName,
+    });
+    // TODO: Type for dinghy, crew, etc
+  }
 
   app.handleMessage('signalk-meshtastic', {
     context,
@@ -315,7 +327,7 @@ module.exports = (app) => {
             // Unknown node
             return;
           }
-          const context = getNodeContext(app, nodes[packet.from]);
+          const context = getNodeContext(app, nodes[packet.from], packet.from);
           if (!context) {
             // Not a vessel
             return;
