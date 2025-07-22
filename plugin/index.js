@@ -396,6 +396,10 @@ module.exports = (app) => {
               value: position.data.groundSpeed,
             },
             {
+              path: 'navigation.courseOverGroundTrue',
+              value: position.data.groundTrack * 1e-5 * (Math.PI / 180),
+            },
+            {
               path: 'navigation.gnss.satellites',
               value: position.data.satsInView,
             },
