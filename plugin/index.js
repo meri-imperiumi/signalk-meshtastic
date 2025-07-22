@@ -38,7 +38,7 @@ function getNodeContext(app, node, nodeNum) {
   // Match the "Some node name DE CALLSIGN" pattern
   const matched = node.longName.match(/.* DE ([A-Z0-9]{4,})$/);
   if (matched && matched[1]) {
-    return Object.keys(app.signalk.root.vessels)
+    const callsignPath = Object.keys(app.signalk.root.vessels)
       .find((vesselCtx) => {
         const vessel = app.signalk.root.vessels[vesselCtx];
         if (!vessel.communication || !vessel.communication.callsignVhf) {
@@ -49,6 +49,10 @@ function getNodeContext(app, node, nodeNum) {
         }
         return false;
       });
+    if (callsignPath) {
+      return `vessels.${callsignPath}`;
+    }
+    return null;
   }
   if (!nodeNum) {
     return null;
