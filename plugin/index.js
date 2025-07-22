@@ -310,6 +310,53 @@ module.exports = (app) => {
             });
           }
         });
+        device.events.onTelemetryPacket.subscribe((packet) => {
+          if (!nodes[packet.from]) {
+            // Unknown node
+            return;
+          }
+          const context = getNodeContext(app, nodes[packet.from]);
+          if (!context) {
+            // Not a vessel
+            return;
+          }
+          if (packet.data.variant && packet.data.variant.case === 'deviceMetrics') {
+            const values = [
+              {
+                path: 'communication.meshtastic.uptime',
+                value: packet.data.variant.value.uptimeSeconds,
+              },
+              {
+                path: 'communication.meshtastic.airUtilTx',
+                value: packet.data.variant.value.airUtilTx,
+              },
+              {
+                path: 'communication.meshtastic.channelUtilization',
+                value: packet.data.variant.value.channelUtilization,
+              },
+              {
+                path: `electrical.batteries.${packet.from}.capacity.stateOfCharge`,
+                value: packet.data.variant.value.batteryLevel / 100,
+              },
+              {
+                path: `electrical.batteries.${packet.from}.voltage`,
+                value: packet.data.variant.value.voltage,
+              },
+            ];
+            app.handleMessage('signalk-meshtastic', {
+              context,
+              updates: [
+                {
+                  source: {
+                    label: 'signalk-meshtastic',
+                  },
+                  timestamp: new Date().toISOString(),
+                  values,
+                },
+              ],
+            });
+          }
+        });
 
         // Subscribe to Signal K values we may want to transmit to Meshtastic
         app.subscriptionmanager.subscribe(
