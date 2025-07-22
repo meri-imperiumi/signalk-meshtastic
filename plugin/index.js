@@ -23,13 +23,39 @@ function median(arr) {
   return s.length % 2 ? s[mid] : ((s[mid - 1] + s[mid]) / 2);
 }
 
-function nodeToSignalK(app, node, nodeInfo) {
-  let context;
+function getNodeContext(app, node) {
   if (node.thisNode) {
-    context = 'vessels.self';
+    return 'vessels.self';
   }
-  // TODO: Create context for other nodes
-  // TODO: Associate nodes with AIS vessels if callsign available
+  // Create context for other nodes
+  // Associate nodes with AIS vessels if callsign available
+  if (!app.signalk.root.vessels) {
+    return null;
+  }
+  if (!node.longName) {
+    return null;
+  }
+  // Match the "Some node name DE CALLSIGN" pattern
+  const matched = node.longName.match(/.* DE ([A-Z0-9]{4,})$/);
+  if (matched && matched[1]) {
+    return Object.keys(app.signalk.root.vessels)
+      .find((vesselCtx) => {
+        const vessel = app.signalk.root.vessels[vesselCtx];
+        if (!vessel.communication || !vessel.communication.callsignVhf) {
+          return false;
+        }
+        if (vessel.communication.callsignVhf === matched[1]) {
+          return true;
+        }
+        return false;
+      });
+  }
+  // TODO Make vessels/other targets for non-boat nodes
+  return null;
+}
+
+function nodeToSignalK(app, node, nodeInfo) {
+  const context = getNodeContext(app, node);
   if (!context) {
     return;
   }
