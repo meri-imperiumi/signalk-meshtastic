@@ -371,6 +371,31 @@ module.exports = (app) => {
                 },
               ],
             });
+            return;
+          }
+          if (packet.data.variant && packet.data.variant.case === 'environmentMetrics') {
+            if (context === 'vessels.self') {
+              // We don't need to loop back here
+              return;
+            }
+            const values = [
+              {
+                path: 'environment.outside.temperature',
+                value: packet.data.variant.value.temperature + 273.15,
+              },
+            ];
+            app.handleMessage('signalk-meshtastic', {
+              context,
+              updates: [
+                {
+                  source: {
+                    label: 'signalk-meshtastic',
+                  },
+                  timestamp: new Date().toISOString(),
+                  values,
+                },
+              ],
+            });
           }
         });
         device.events.onPositionPacket.subscribe((position) => {
