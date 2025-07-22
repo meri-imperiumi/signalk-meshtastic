@@ -369,6 +369,54 @@ module.exports = (app) => {
             });
           }
         });
+        device.events.onPositionPacket.subscribe((position) => {
+          if (!nodes[position.from]) {
+            // Unknown node
+            return;
+          }
+          const context = getNodeContext(app, nodes[position.from], position.from);
+          if (!context) {
+            // Not a vessel
+            return;
+          }
+          if (context === 'vessels.self') {
+            // We don't need to loop back here
+            return;
+          }
+          const values = [
+            {
+              path: 'navigation.position',
+              value: {
+                latitude: position.data.latitudeI * 1e-7,
+                longitude: position.data.longitudeI * 1e-7,
+              },
+            },
+            {
+              path: 'navigation.speedOverGround',
+              value: position.data.groundSpeed,
+            },
+            {
+              path: 'navigation.gnss.satellites',
+              value: position.data.satsInView,
+            },
+            {
+              path: 'navigation.gnss.antennaAltitude',
+              value: position.data.altitude,
+            },
+          ];
+          app.handleMessage('signalk-meshtastic', {
+            context,
+            updates: [
+              {
+                source: {
+                  label: 'signalk-meshtastic',
+                },
+                timestamp: new Date().toISOString(),
+                values,
+              },
+            ],
+          });
+        });
 
         // Subscribe to Signal K values we may want to transmit to Meshtastic
         app.subscriptionmanager.subscribe(
