@@ -100,7 +100,10 @@ function nodeToSignalK(app, node, nodeInfo) {
 module.exports = (app) => {
   const plugin = {};
   let device;
-  let unsubscribes = [];
+  const unsubscribes = {
+    signalk: [],
+    meshtastic: [],
+  };
   const nodes = {};
   const telemetry = new Telemetry();
   let publishInterval;
@@ -187,7 +190,33 @@ module.exports = (app) => {
           }
           return false;
         });
-      app.setPluginStatus(`Node at ${settings.device.address} can see ${nodesOnline.length} Meshstastic nodes`);
+      let deviceState = 'unknown status';
+      switch (device.deviceStatus) {
+        case 1: {
+          deviceState = 'restarting';
+          break;
+        }
+        case 2: {
+          deviceState = 'disconnected';
+          break;
+        }
+        case 3: {
+          deviceState = 'connecting';
+          break;
+        }
+        case 4: {
+          deviceState = 'reconnecting';
+          break;
+        }
+        case 5: {
+          deviceState = 'connected';
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+      app.setPluginStatus(`${deviceState.charAt(0).toUpperCase() + deviceState.slice(1)} node at ${settings.device.address} can see ${nodesOnline.length} Meshtastic nodes`);
       app.handleMessage('signalk-meshtastic', {
         context: 'vessels.self',
         updates: [
@@ -223,127 +252,188 @@ module.exports = (app) => {
       .then((transport) => {
         device = new MeshDevice(transport);
 
-        device.events.onMyNodeInfo.subscribe((myNodeInfo) => {
-          if (!nodes[myNodeInfo.myNodeNum]) {
-            nodes[myNodeInfo.myNodeNum] = {};
-          }
-          nodes[myNodeInfo.myNodeNum].thisNode = true;
-          setConnectionStatus();
-        });
-        device.events.onNodeInfoPacket.subscribe((nodeInfo) => {
-          if (!nodes[nodeInfo.num]) {
-            nodes[nodeInfo.num] = {};
-          }
-          nodes[nodeInfo.num].longName = nodeInfo.user.longName;
-          nodes[nodeInfo.num].shortName = nodeInfo.user.shortName;
-          nodes[nodeInfo.num].seen = new Date();
-          nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo);
-          setConnectionStatus();
-          writeFile(nodeDbFile, JSON.stringify(nodes, null, 2), 'utf-8')
-            .catch((e) => {
-              app.error(`Failed to store node DB: ${e.message}`);
-            });
-        });
-        device.events.onMeshPacket.subscribe((packet) => {
-          if (!nodes[packet.from]) {
-            nodes[packet.from] = {};
-          }
-          nodes[packet.from].seen = new Date();
-          setConnectionStatus();
-        });
-        device.events.onMessagePacket.subscribe((message) => {
-          if (message.type !== 'direct') {
-            // Not DM
-            return;
-          }
-          const crew = settings.nodes
-            .filter((node) => {
-              if (node.role === 'crew') {
-                return true;
-              }
-              return false;
-            })
-            .map((node) => node.node);
-          if (crew.indexOf(message.from) === -1) {
-            // Not from crew
-            return;
-          }
-          const switching = message.data.match(/turn ([a-z0-9]+) (on|off)/i);
-          if (settings.communications
-            && settings.communications.digital_switching
-            && switching) {
-            const light = switching[1];
-            const value = switching[2] === 'on';
-            app.putSelfPath(`electrical.switches.${light}.state`, value, (res) => {
-              if (res.state !== 'COMPLETED') {
-                return;
-              }
-              if (res.statusCode !== 200) {
-                device.sendText(res.message, message.from, true, false)
+        unsubscribes.meshtastic.push(
+          device.events.onDeviceStatus.subscribe(() => {
+            setConnectionStatus();
+          }),
+          device.events.onMyNodeInfo.subscribe((myNodeInfo) => {
+            if (!nodes[myNodeInfo.myNodeNum]) {
+              nodes[myNodeInfo.myNodeNum] = {};
+            }
+            nodes[myNodeInfo.myNodeNum].thisNode = true;
+            setConnectionStatus();
+          }),
+          device.events.onNodeInfoPacket.subscribe((nodeInfo) => {
+            if (!nodes[nodeInfo.num]) {
+              nodes[nodeInfo.num] = {};
+            }
+            nodes[nodeInfo.num].longName = nodeInfo.user.longName;
+            nodes[nodeInfo.num].shortName = nodeInfo.user.shortName;
+            nodes[nodeInfo.num].seen = new Date();
+            nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo);
+            setConnectionStatus();
+            writeFile(nodeDbFile, JSON.stringify(nodes, null, 2), 'utf-8')
+              .catch((e) => {
+                app.error(`Failed to store node DB: ${e.message}`);
+              });
+          }),
+          device.events.onMeshPacket.subscribe((packet) => {
+            if (!nodes[packet.from]) {
+              nodes[packet.from] = {};
+            }
+            nodes[packet.from].seen = new Date();
+            setConnectionStatus();
+          }),
+          device.events.onMessagePacket.subscribe((message) => {
+            if (message.type !== 'direct') {
+              // Not DM
+              return;
+            }
+            const crew = settings.nodes
+              .filter((node) => {
+                if (node.role === 'crew') {
+                  return true;
+                }
+                return false;
+              })
+              .map((node) => node.node);
+            if (crew.indexOf(message.from) === -1) {
+              // Not from crew
+              return;
+            }
+            const switching = message.data.match(/turn ([a-z0-9]+) (on|off)/i);
+            if (settings.communications
+              && settings.communications.digital_switching
+              && switching) {
+              const light = switching[1];
+              const value = switching[2] === 'on';
+              app.putSelfPath(`electrical.switches.${light}.state`, value, (res) => {
+                if (res.state !== 'COMPLETED') {
+                  return;
+                }
+                if (res.statusCode !== 200) {
+                  device.sendText(res.message, message.from, true, false)
+                    .catch((e) => app.error(`Failed to send message: ${e.message}`));
+                  return;
+                }
+                device.sendText(`OK, ${light} is ${switching[2]}`, message.from, true, false)
                   .catch((e) => app.error(`Failed to send message: ${e.message}`));
+              });
+            }
+          }),
+          device.events.onTelemetryPacket.subscribe((packet) => {
+            if (!nodes[packet.from]) {
+              // Unknown node
+              return;
+            }
+            const context = getNodeContext(app, nodes[packet.from], packet.from);
+            if (!context) {
+              // Not a vessel
+              return;
+            }
+            if (packet.data.variant && packet.data.variant.case === 'deviceMetrics') {
+              const values = [
+                {
+                  path: 'communication.meshtastic.uptime',
+                  value: packet.data.variant.value.uptimeSeconds,
+                },
+                {
+                  path: 'communication.meshtastic.airUtilTx',
+                  value: packet.data.variant.value.airUtilTx,
+                },
+                {
+                  path: 'communication.meshtastic.channelUtilization',
+                  value: packet.data.variant.value.channelUtilization,
+                },
+                {
+                  path: `electrical.batteries.${packet.from}.capacity.stateOfCharge`,
+                  value: packet.data.variant.value.batteryLevel / 100,
+                },
+                {
+                  path: `electrical.batteries.${packet.from}.voltage`,
+                  value: packet.data.variant.value.voltage,
+                },
+              ];
+              app.handleMessage('signalk-meshtastic', {
+                context,
+                updates: [
+                  {
+                    source: {
+                      label: 'signalk-meshtastic',
+                    },
+                    timestamp: new Date().toISOString(),
+                    values,
+                  },
+                ],
+              });
+              return;
+            }
+            if (packet.data.variant && packet.data.variant.case === 'environmentMetrics') {
+              if (context === 'vessels.self') {
+                // We don't need to loop back here
                 return;
               }
-              device.sendText(`OK, ${light} is ${switching[2]}`, message.from, true, false)
-                .catch((e) => app.error(`Failed to send message: ${e.message}`));
-            });
-          }
-        });
-        device.events.onTelemetryPacket.subscribe((packet) => {
-          if (!nodes[packet.from]) {
-            // Unknown node
-            return;
-          }
-          const context = getNodeContext(app, nodes[packet.from], packet.from);
-          if (!context) {
-            // Not a vessel
-            return;
-          }
-          if (packet.data.variant && packet.data.variant.case === 'deviceMetrics') {
-            const values = [
-              {
-                path: 'communication.meshtastic.uptime',
-                value: packet.data.variant.value.uptimeSeconds,
-              },
-              {
-                path: 'communication.meshtastic.airUtilTx',
-                value: packet.data.variant.value.airUtilTx,
-              },
-              {
-                path: 'communication.meshtastic.channelUtilization',
-                value: packet.data.variant.value.channelUtilization,
-              },
-              {
-                path: `electrical.batteries.${packet.from}.capacity.stateOfCharge`,
-                value: packet.data.variant.value.batteryLevel / 100,
-              },
-              {
-                path: `electrical.batteries.${packet.from}.voltage`,
-                value: packet.data.variant.value.voltage,
-              },
-            ];
-            app.handleMessage('signalk-meshtastic', {
-              context,
-              updates: [
+              const values = [
                 {
-                  source: {
-                    label: 'signalk-meshtastic',
-                  },
-                  timestamp: new Date().toISOString(),
-                  values,
+                  path: 'environment.outside.temperature',
+                  value: packet.data.variant.value.temperature + 273.15,
                 },
-              ],
-            });
-            return;
-          }
-          if (packet.data.variant && packet.data.variant.case === 'environmentMetrics') {
+              ];
+              app.handleMessage('signalk-meshtastic', {
+                context,
+                updates: [
+                  {
+                    source: {
+                      label: 'signalk-meshtastic',
+                    },
+                    timestamp: new Date().toISOString(),
+                    values,
+                  },
+                ],
+              });
+            }
+          }),
+          device.events.onPositionPacket.subscribe((position) => {
+            if (!nodes[position.from]) {
+              // Unknown node
+              return;
+            }
+            const context = getNodeContext(app, nodes[position.from], position.from);
+            if (!context) {
+              // Not a vessel
+              return;
+            }
             if (context === 'vessels.self') {
               // We don't need to loop back here
               return;
             }
+            let groundTrack = 0;
+            if (position.data.groundTrack) {
+              groundTrack = position.data.groundTrack * 1e-5 * (Math.PI / 180);
+            }
             const values = [
               {
-                path: 'environment.outside.temperature',
-                value: packet.data.variant.value.temperature + 273.15,
+                path: 'navigation.position',
+                value: {
+                  latitude: position.data.latitudeI * 1e-7,
+                  longitude: position.data.longitudeI * 1e-7,
+                },
+              },
+              {
+                path: 'navigation.speedOverGround',
+                value: position.data.groundSpeed || 0,
+              },
+              {
+                path: 'navigation.courseOverGroundTrue',
+                value: groundTrack,
+              },
+              {
+                path: 'navigation.gnss.satellites',
+                value: position.data.satsInView,
+              },
+              {
+                path: 'navigation.gnss.antennaAltitude',
+                value: position.data.altitude,
               },
             ];
             app.handleMessage('signalk-meshtastic', {
@@ -358,64 +448,8 @@ module.exports = (app) => {
                 },
               ],
             });
-          }
-        });
-        device.events.onPositionPacket.subscribe((position) => {
-          if (!nodes[position.from]) {
-            // Unknown node
-            return;
-          }
-          const context = getNodeContext(app, nodes[position.from], position.from);
-          if (!context) {
-            // Not a vessel
-            return;
-          }
-          if (context === 'vessels.self') {
-            // We don't need to loop back here
-            return;
-          }
-          let groundTrack = 0;
-          if (position.data.groundTrack) {
-            groundTrack = position.data.groundTrack * 1e-5 * (Math.PI / 180);
-          }
-          const values = [
-            {
-              path: 'navigation.position',
-              value: {
-                latitude: position.data.latitudeI * 1e-7,
-                longitude: position.data.longitudeI * 1e-7,
-              },
-            },
-            {
-              path: 'navigation.speedOverGround',
-              value: position.data.groundSpeed || 0,
-            },
-            {
-              path: 'navigation.courseOverGroundTrue',
-              value: groundTrack,
-            },
-            {
-              path: 'navigation.gnss.satellites',
-              value: position.data.satsInView,
-            },
-            {
-              path: 'navigation.gnss.antennaAltitude',
-              value: position.data.altitude,
-            },
-          ];
-          app.handleMessage('signalk-meshtastic', {
-            context,
-            updates: [
-              {
-                source: {
-                  label: 'signalk-meshtastic',
-                },
-                timestamp: new Date().toISOString(),
-                values,
-              },
-            ],
-          });
-        });
+          }),
+        );
 
         // Subscribe to Signal K values we may want to transmit to Meshtastic
         app.subscriptionmanager.subscribe(
@@ -464,7 +498,7 @@ module.exports = (app) => {
               },
             ],
           },
-          unsubscribes,
+          unsubscribes.signalk,
           (subscriptionError) => {
             app.error(`Error: ${subscriptionError}`);
           },
@@ -556,8 +590,18 @@ module.exports = (app) => {
     if (publishInterval) {
       clearInterval(publishInterval);
     }
-    unsubscribes.forEach((f) => f());
-    unsubscribes = [];
+    unsubscribes.signalk.forEach((f) => f());
+    unsubscribes.signalk = [];
+    unsubscribes.meshtastic.forEach((f) => f());
+    unsubscribes.meshtastic = [];
+
+    if (!this.device) {
+      return;
+    }
+    this.device.disconnect()
+      .catch((e) => {
+        app.error(`Failed to disconnect: ${e.message}`);
+      });
   };
   plugin.schema = () => {
     function nodeList() {
