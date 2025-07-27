@@ -212,6 +212,14 @@ module.exports = (app) => {
           deviceState = 'connected';
           break;
         }
+        case 6: {
+          deviceState = 'configuring';
+          break;
+        }
+        case 7: {
+          deviceState = 'configured';
+          break;
+        }
         default: {
           break;
         }
