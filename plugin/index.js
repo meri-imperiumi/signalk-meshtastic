@@ -81,7 +81,7 @@ function nodeToSignalK(app, node, nodeInfo) {
     },
   ];
 
-  if (context.indexOf('mestastic.urn') === 0) {
+  if (context.indexOf('meshtastic.urn') === 0) {
     // This is a purely Meshtastic node so we inject additional data to "vesselify" it
     values.push({
       path: 'name',
