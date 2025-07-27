@@ -29,13 +29,13 @@ Mostly works. Installation is a bit rough as you need to [enable JSR registry fo
 * Send Signal K alerts as Meshtastic text messages to crew
 * Share weather station data from Signal K (wind, temperature, etc) over Meshtastic. Opt-in.
 * Control digital switching via Meshtastic direct messages (_"Turn decklight on"_). Opt-in.
+* Associate Meshtastic nodes with other (AIS) vessels based on the `Some node name DE <callsign>` pattern
 
 ## Planned features
 
 * Guard mode to alert if the tracked dinghy moves
 * Alerts for crew or dighy tracker devices running low on battery
 * Keeping a mileage log for the dinghy
-* Associating Meshtastic nodes with other (AIS) vessels
 * More text commands over Meshtastic to query vessel status etc
 
 ## Requirements
@@ -50,7 +50,7 @@ LoRa is line-of-sight communications quite similarly to VHF. Communications rang
 ## Getting started
 
 * Configure your "boat Meshtastic node" device so that it is connected to your boat network
-* If you have a valid Ship Station License, add your callsign to the long name of the node. Typical pattern is `<Vessel name> DE <Callsign>`, for example _"Lille Oe DE DH8613"_
+* If you have a valid Ship Station License, add your callsign to the long name of the node. Typical pattern is `<Vessel name> DE <Callsign>`, for example _"Lille Oe DE DH8613"_ (yes, you need to use `DE` also for non-German vessels. This is radio slang for "this is", not a country code)
 * Install and enable this plugin
 * Wait for some minutes for the plugin to see nearby Meshtastic nodes
 * Configure plugin and set appropriate roles for the crew and dinghy tracker Meshtastic devices
