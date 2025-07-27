@@ -30,6 +30,7 @@ Mostly works. Installation is a bit rough as you need to [enable JSR registry fo
 * Share weather station data from Signal K (wind, temperature, etc) over Meshtastic. Opt-in.
 * Control digital switching via Meshtastic direct messages (_"Turn decklight on"_). Opt-in.
 * Associate Meshtastic nodes with other (AIS) vessels based on the `Some node name DE <callsign>` pattern
+* Show position-sharing Meshtastic nodes as vessels in Freeboard etc. Opt-in.
 
 ## Planned features
 

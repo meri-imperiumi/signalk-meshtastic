@@ -16,7 +16,7 @@ let create;
 let toBinary;
 let Protobuf;
 
-function getNodeContext(app, node, nodeNum) {
+function getNodeContext(app, node, nodeNum, settings) {
   if (node.thisNode) {
     return 'vessels.self';
   }
@@ -50,12 +50,17 @@ function getNodeContext(app, node, nodeNum) {
   if (!nodeNum) {
     return null;
   }
+  if (settings && settings.communications && settings.communications.populate_vessels) {
+    // 98 MMSI prefix is for craft associated with a parent ship
+    // TODO: Add MID (country code of parent ship
+    return `vessels.urn:mrn:imo:mmsi:98${nodeNum}`;
+  }
   // Make vessels/other targets for non-boat nodes
   return `meshtastic.urn:meshtastic:node:${nodeNum}`;
 }
 
-function nodeToSignalK(app, node, nodeInfo) {
-  const context = getNodeContext(app, node, nodeInfo.num);
+function nodeToSignalK(app, node, nodeInfo, settings) {
+  const context = getNodeContext(app, node, nodeInfo.num, settings);
   if (!context) {
     return;
   }
@@ -74,12 +79,22 @@ function nodeToSignalK(app, node, nodeInfo) {
     },
   ];
 
-  if (context.indexOf('meshtastic.urn') === 0) {
+  if (context.indexOf('meshtastic.urn') === 0
+    || (context.indexOf('vessels.urn') === 0
+      && context.indexOf(':98') !== -1)) {
     // This is a purely Meshtastic node so we inject additional data to "vesselify" it
     values.push({
-      path: 'name',
-      value: nodeInfo.user.longName,
+      path: '',
+      value: {
+        name: nodeInfo.user.longName,
+      },
     });
+    if (settings && settings.communications && settings.communications.populate_vessels) {
+      values.push({
+        path: 'mmsi',
+        value: context.split(':').at(-1),
+      });
+    }
     // TODO: Type for dinghy, crew, etc
   }
 
@@ -278,7 +293,7 @@ module.exports = (app) => {
             nodes[nodeInfo.num].longName = nodeInfo.user.longName;
             nodes[nodeInfo.num].shortName = nodeInfo.user.shortName;
             nodes[nodeInfo.num].seen = new Date();
-            nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo);
+            nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo, settings);
             setConnectionStatus();
             writeFile(nodeDbFile, JSON.stringify(nodes, null, 2), 'utf-8')
               .catch((e) => {
@@ -334,7 +349,7 @@ module.exports = (app) => {
               // Unknown node
               return;
             }
-            const context = getNodeContext(app, nodes[packet.from], packet.from);
+            const context = getNodeContext(app, nodes[packet.from], packet.from, settings);
             if (!context) {
               // Not a vessel
               return;
@@ -406,7 +421,7 @@ module.exports = (app) => {
               // Unknown node
               return;
             }
-            const context = getNodeContext(app, nodes[position.from], position.from);
+            const context = getNodeContext(app, nodes[position.from], position.from, settings);
             if (!context) {
               // Not a vessel
               return;
@@ -720,6 +735,11 @@ module.exports = (app) => {
             digital_switching: {
               type: 'boolean',
               title: 'Allow crew members to change digital switch status by Meshtastic message ("turn decklight on")',
+              default: false,
+            },
+            populate_vessels: {
+              type: 'boolean',
+              title: 'Populate Signal K vessels for Meshtastic devices sharing location (for display in Freeboard etc)',
               default: false,
             },
           },
