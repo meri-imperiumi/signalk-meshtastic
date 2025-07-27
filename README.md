@@ -50,7 +50,8 @@ LoRa is line-of-sight communications quite similarly to VHF. Communications rang
 ## Getting started
 
 * Configure your "boat Meshtastic node" device so that it is connected to your boat network
-* If you have a valid Ship Station License, add your callsign to the long name of the node. Typical pattern is `<Vessel name> DE <Callsign>`, for example _"Lille Oe DE DH8613"_ (yes, you need to use `DE` also for non-German vessels. This is radio slang for "this is", not a country code)
+* If you have a valid Ship Station License, add your callsign to the long name of the node. Typical pattern is `<Vessel name> DE <Callsign>`, for example _"Lille Oe DE DH8613"_<br>
+  (yes, you need to use `DE` also for non-German vessels. This is radio slang for "this is", not a country code)
 * Install and enable this plugin
 * Wait for some minutes for the plugin to see nearby Meshtastic nodes
 * Configure plugin and set appropriate roles for the crew and dinghy tracker Meshtastic devices
