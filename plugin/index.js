@@ -5,6 +5,8 @@ const { join } = require('path');
 // Hack for Node.js compatibility of Meshtastic Deno lib
 const crypto = require('node:crypto');
 
+const Telemetry = require('./telemetry');
+
 global.crypto = crypto;
 
 // The ES modules we'll need to import
@@ -13,15 +15,6 @@ let TransportHTTP;
 let create;
 let toBinary;
 let Protobuf;
-
-function median(arr) {
-  if (!arr.length) {
-    return undefined;
-  }
-  const s = [...arr].sort((a, b) => a - b);
-  const mid = Math.floor(s.length / 2);
-  return s.length % 2 ? s[mid] : ((s[mid - 1] + s[mid]) / 2);
-}
 
 function getNodeContext(app, node, nodeNum) {
   if (node.thisNode) {
@@ -109,7 +102,7 @@ module.exports = (app) => {
   let device;
   let unsubscribes = [];
   const nodes = {};
-  const telemetry = {};
+  const telemetry = new Telemetry();
   let publishInterval;
   plugin.id = 'signalk-meshtastic';
   plugin.name = 'Meshtastic';
@@ -155,43 +148,12 @@ module.exports = (app) => {
         return;
       }
       if (!settings.communications || !settings.communications.send_environment_metrics) {
+        // Metrics sending disabled
         return;
       }
-      const values = {};
-      if (telemetry['environment.outside.temperature']) {
-        values.temperature = telemetry['environment.outside.temperature'] - 273.15;
-      }
-      if (telemetry['environment.outside.relativeHumidity']) {
-        values.relativeHumidity = telemetry['environment.outside.relativeHumidity'] * 100;
-      }
-      if (telemetry['environment.outside.pressure']) {
-        values.barometricPressure = telemetry['environment.outside.pressure'] / 100;
-      }
-      if (telemetry['environment.wind.directionTrue']) {
-        values.windDirection = Math.floor(telemetry['environment.wind.directionTrue'] * (180 / Math.PI));
-      }
-      if (telemetry['environment.wind.speedOverGround'] && telemetry['environment.wind.speedOverGround'].length) {
-        values.windSpeed = median(telemetry['environment.wind.speedOverGround']);
-        values.windGust = telemetry['environment.wind.speedOverGround'].reduce((prev, current) => (current > prev ? current : prev), 0);
-        values.windLull = telemetry['environment.wind.speedOverGround'].reduce((prev, current) => {
-          if (!prev) {
-            return current;
-          }
-          return current < prev ? current : prev;
-        }, 0);
-        telemetry['environment.wind.speedOverGround'] = [];
-      }
-      if (telemetry['electrical.batteries.house.voltage']) {
-        values.voltage = telemetry['electrical.batteries.house.voltage'];
-      }
-      if (telemetry['electrical.batteries.house.current']) {
-        values.current = telemetry['electrical.batteries.house.current'] * 1000;
-      }
-      if (telemetry['navigation.anchor.distanceFromBow']) {
-        // Using distance is a bit silly here as the unit is mm, but what can we do
-        values.distance = telemetry['navigation.anchor.distanceFromBow'] * 1000;
-      }
+      const values = telemetry.toMeshtastic();
       if (Object.keys(values).length === 0) {
+        // No telemetry to send
         return;
       }
       const telemetryMessage = create(Protobuf.Telemetry.TelemetrySchema, {
@@ -569,14 +531,11 @@ module.exports = (app) => {
                   return;
                 }
                 if (v.path === 'environment.wind.speedOverGround') {
-                  if (!telemetry['environment.wind.speedOverGround']) {
-                    telemetry['environment.wind.speedOverGround'] = [];
-                  }
-                  telemetry['environment.wind.speedOverGround'].push(v.value);
+                  telemetry.updateWindSpeed(v.value);
                   return;
                 }
                 // The others go to the telemetry object
-                telemetry[v.path] = v.value;
+                telemetry.update(v.path, v.value);
               });
             });
           },
