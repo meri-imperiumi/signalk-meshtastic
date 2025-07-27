@@ -412,6 +412,10 @@ module.exports = (app) => {
             // We don't need to loop back here
             return;
           }
+          let groundTrack = 0;
+          if (position.data.groundTrack) {
+            groundTrack = position.data.groundTrack * 1e-5 * (Math.PI / 180);
+          }
           const values = [
             {
               path: 'navigation.position',
@@ -422,11 +426,11 @@ module.exports = (app) => {
             },
             {
               path: 'navigation.speedOverGround',
-              value: position.data.groundSpeed,
+              value: position.data.groundSpeed || 0,
             },
             {
               path: 'navigation.courseOverGroundTrue',
-              value: position.data.groundTrack * 1e-5 * (Math.PI / 180),
+              value: groundTrack,
             },
             {
               path: 'navigation.gnss.satellites',
