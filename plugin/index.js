@@ -404,6 +404,18 @@ module.exports = (app) => {
                   value: packet.data.variant.value.temperature + 273.15,
                 },
               ];
+              if (packet.data.variant.value.windDirection) {
+                values.push({
+                  path: 'environment.wind.directionTrue',
+                  value: packet.data.variant.value.windDirection * (Math.PI / 180),
+                });
+              }
+              if (packet.data.variant.value.windSpeed) {
+                values.push({
+                  path: 'environemnt.wind.speedOverGround',
+                  value: packet.data.variant.value.windSpeed,
+                });
+              }
               app.handleMessage('signalk-meshtastic', {
                 context,
                 updates: [
