@@ -91,8 +91,10 @@ function nodeToSignalK(app, node, nodeInfo, settings) {
     });
     if (settings && settings.communications && settings.communications.populate_vessels) {
       values.push({
-        path: 'mmsi',
-        value: context.split(':').at(-1),
+        path: '',
+        value: {
+          mmsi: context.split(':').at(-1),
+        },
       });
     }
     // TODO: Type for dinghy, crew, etc
