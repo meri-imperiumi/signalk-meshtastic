@@ -412,7 +412,7 @@ module.exports = (app) => {
               }
               if (packet.data.variant.value.windSpeed) {
                 values.push({
-                  path: 'environemnt.wind.speedOverGround',
+                  path: 'environment.wind.speedOverGround',
                   value: packet.data.variant.value.windSpeed,
                 });
               }
