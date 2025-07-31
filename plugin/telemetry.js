@@ -47,6 +47,9 @@ class Telemetry {
     if (this.data['navigation.anchor.distanceFromBow']) {
       // Using distance is a bit silly here as the unit is mm, but what can we do
       values.distance = this.data['navigation.anchor.distanceFromBow'] * 1000;
+    } else if (this.data['environment.depth.belowSurface']) {
+      // If not anchored, report depth as distance. Still mm.
+      values.distance = this.data['environment.depth.belowSurface'] * 1000;
     }
     return values;
   }

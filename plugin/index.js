@@ -521,6 +521,10 @@ module.exports = (app) => {
                 path: 'navigation.anchor.distanceFromBow',
                 period: 1000,
               },
+              {
+                path: 'environment.depth.belowSurface',
+                period: 1000,
+              },
             ],
           },
           unsubscribes.signalk,
