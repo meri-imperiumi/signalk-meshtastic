@@ -57,6 +57,8 @@ LoRa is line-of-sight communications quite similarly to VHF. Communications rang
 * Wait for some minutes for the plugin to see nearby Meshtastic nodes
 * Configure plugin and set appropriate roles for the crew and dinghy tracker Meshtastic devices
 
+![](./doc/config-crew-role.png)
+
 ## Telemetry sent to Meshtastic
 
 If enabled, your "boat node" will transmit the following telemetry to Meshtastic. This enables tracking various important metrics about your boat also remotely. They are visible in the device details in your Meshtastic app:
