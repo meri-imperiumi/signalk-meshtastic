@@ -3,6 +3,8 @@ Signal K integration with Meshtastic
 
 This plugin enables vessels running [Signal K](https://signalk.org) to interact with the [Meshtastic](https://meshtastic.org) mesh network. Meshtastic allows radio communications between relatively inexpensive LoRa devices over long distances.
 
+![Basic Meshtastic communications](./docs/meshtastic-bequia.png)
+
 Being a mesh network, there is no need for external telecommunications infrastructure or monthly payments. This means communication between Meshtastic devices onboard and on shore can work just as well in the Finnish Archipelago Sea as in the Tuamotus. In more densely populated places communications may benefit from other Meshtastic users relaying the messages, making it possible to communicate with the boat from for example across a city.
 
 This plugin is designed to work with regular unmodified Meshtastic devices and settings. You can keep your boat and other Meshtastic nodes either in the public channel, or [set up your private mesh](https://meshtastic.org/docs/configuration/tips/#creating-a-private-primary-with-default-secondary).
