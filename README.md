@@ -7,7 +7,7 @@ This plugin enables vessels running [Signal K](https://signalk.org) to interact 
 
 Being a mesh network, there is no need for external telecommunications infrastructure or monthly payments. This means communication between Meshtastic devices onboard and on shore can work just as well in the Finnish Archipelago Sea as in the Tuamotus. In more densely populated places communications may benefit from other Meshtastic users relaying the messages, making it possible to communicate with the boat from for example across a city.
 
-This plugin is designed to work with regular unmodified Meshtastic devices and settings. You can keep your boat and other Meshtastic nodes either in the public channel, or [set up your private mesh](https://meshtastic.org/docs/configuration/tips/#creating-a-private-primary-with-default-secondary).
+This plugin is designed to work with regular unmodified Meshtastic devices and settings. You can keep your boat and other Meshtastic nodes either in the public channel, or [set up your private mesh](https://meshtastic.org/docs/configuration/tips/#creating-a-private-primary-with-default-secondary). With a private mesh the location of your devices won't be visible to the public, and communications between them will be encrypted.
 
 Many different kinds of Meshtastic devices are available, from basic microcontroller boards to ready-to-go consumer devices. Some are entirely standalone with screens and keyboards, and others need a smartphone app.
 
@@ -44,8 +44,8 @@ Mostly works. Installation is a bit rough as you need to [enable JSR registry fo
 ## Requirements
 
 * This plugin running inside your Signal K installation
-* One [Meshtastic device](https://meshtastic.org/docs/hardware/devices/) running and connected to the same network (typically boat WiFi) as Signal K
-* At least one additional Meshtastic device for the crew ashore
+* One [Meshtastic device](https://meshtastic.org/docs/hardware/devices/) running and connected to the same network (typically boat WiFi) as Signal K. This should be an [ESP32 based](https://meshtastic.org/docs/hardware/devices/heltec-automation/lora32/?heltec=v3) device for WiFi connectivity
+* At least one additional Meshtastic device for the crew ashore. [Seeed T1000-e](https://meshtastic.org/docs/hardware/devices/seeed-studio/sensecap/card-tracker/) is a great option, but any battery-powered Meshtastic device will work
 * Optionally, a Meshtastic GPS tracker device installed in the dinghy
 
 LoRa is line-of-sight communications quite similarly to VHF. Communications range would greatly benefit from a Meshtastic repeater installed high in the mast. Similarly, repeaters on nearby hills or high buildings can be helpful. But just with the boat node and the node carried by crew it should be possible to reach ranges of over 1km.
