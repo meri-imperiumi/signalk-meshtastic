@@ -117,6 +117,8 @@ function nodeToSignalK(app, node, nodeInfo, settings) {
 module.exports = (app) => {
   const plugin = {};
   let device;
+  let watchdog;
+  let watchdogTriggered = 0;
   const unsubscribes = {
     signalk: [],
     meshtastic: [],
@@ -151,7 +153,7 @@ module.exports = (app) => {
       app.setPluginError(`Failed to load Meshtastic library: ${e.message}`);
     });
 
-  plugin.start = (settings) => {
+  plugin.start = (settings, restart) => {
     if (!TransportHTTP) {
       app.setPluginStatus('Waiting for Meshtastic library to load');
       setTimeout(() => {
@@ -193,7 +195,23 @@ module.exports = (app) => {
         .catch((e) => app.error(`Failed to send telemetry: ${e.message}`));
     }, 60000 * 4);
 
+    function setWatchdog() {
+      // Clear previous watchdog
+      if (watchdog) {
+        clearTimeout(watchdog);
+      }
+      const minutes = 10;
+      // If we haven't been called in 10min, restart plugin
+      watchdog = setTimeout(() => {
+        watchdogTriggered += 1;
+        app.log(`Watchdog ${watchdogTriggered} triggered, no packets seen in ${minutes}min`);
+        app.error(`Watchdog ${watchdogTriggered} triggered, no packets seen in ${minutes}min`);
+        restart(settings);
+      }, 6000 * minutes);
+    }
+
     function setConnectionStatus() {
+      setWatchdog();
       const now = new Date();
       const nodesOnline = Object.keys(nodes)
         .filter((nodeId) => {
