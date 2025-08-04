@@ -157,7 +157,7 @@ module.exports = (app) => {
     if (!TransportHTTP) {
       app.setPluginStatus('Waiting for Meshtastic library to load');
       setTimeout(() => {
-        plugin.start(settings);
+        plugin.start(settings, restart);
       }, 1);
       return;
     }
