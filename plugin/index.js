@@ -197,6 +197,7 @@ module.exports = (app) => {
 
     function setWatchdog() {
       // Clear previous watchdog
+      console.log(`Watchdog ${watchdogTriggered} reset`);
       if (watchdog) {
         clearTimeout(watchdog);
       }
@@ -204,10 +205,10 @@ module.exports = (app) => {
       // If we haven't been called in 10min, restart plugin
       watchdog = setTimeout(() => {
         watchdogTriggered += 1;
-        app.log(`Watchdog ${watchdogTriggered} triggered, no packets seen in ${minutes}min`);
+        console.log(`Watchdog ${watchdogTriggered} triggered, no packets seen in ${minutes}min`);
         app.error(`Watchdog ${watchdogTriggered} triggered, no packets seen in ${minutes}min`);
         restart(settings);
-      }, 6000 * minutes);
+      }, 60000 * minutes);
     }
 
     function setConnectionStatus() {
@@ -648,6 +649,9 @@ module.exports = (app) => {
   plugin.stop = () => {
     if (publishInterval) {
       clearInterval(publishInterval);
+    }
+    if (watchdog) {
+      clearTimeout(watchdog);
     }
     unsubscribes.signalk.forEach((f) => f());
     unsubscribes.signalk = [];
