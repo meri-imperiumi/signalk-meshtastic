@@ -11,7 +11,7 @@ global.crypto = crypto;
 
 // The ES modules we'll need to import
 let MeshDevice;
-let TransportHTTP;
+let TransportNode;
 let create;
 let toBinary;
 let Protobuf;
@@ -134,10 +134,10 @@ module.exports = (app) => {
   import('@meshtastic/core')
     .then((lib) => {
       MeshDevice = lib.MeshDevice;
-      return import('@meshtastic/transport-http');
+      return import('@meshtastic/transport-node');
     })
     .then((lib) => {
-      TransportHTTP = lib.TransportHTTP;
+      TransportNode = lib.TransportNode;
       return import('@bufbuild/protobuf');
     })
     .then((lib) => {
@@ -154,7 +154,7 @@ module.exports = (app) => {
     });
 
   plugin.start = (settings, restart) => {
-    if (!TransportHTTP) {
+    if (!TransportNode) {
       app.setPluginStatus('Waiting for Meshtastic library to load');
       setTimeout(() => {
         plugin.start(settings, restart);
@@ -291,7 +291,7 @@ module.exports = (app) => {
             nodes[nodeNum].seen = new Date(nodeDbData[nodeNum].seen);
           });
         app.setPluginStatus(`Connecting to Meshtastic node ${settings.device.address}`);
-        return TransportHTTP.create(settings.device.address);
+        return TransportNode.create(settings.device.address);
       })
       .then((transport) => {
         device = new MeshDevice(transport);
@@ -639,6 +639,15 @@ module.exports = (app) => {
         return device.configure();
       })
       .catch((e) => {
+        if (e.code === 'ENOTFOUND') {
+          // Couldn't find node, possibly due to a node restart/crash
+          // Try connecting again after a while
+          app.error(`Unable to connect to node: ${settings.device.address} not found. Retrying`);
+          setTimeout(() => {
+            restart(settings);
+          }, 30000);
+          return;
+        }
         // Configure often times out, we can ignore it
         app.error(`Failed to connect: ${e.message}`);
       })
