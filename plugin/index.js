@@ -722,6 +722,15 @@ module.exports = (app) => {
         return device.configure();
       })
       .catch((e) => {
+        if (e.code === 'ENOTFOUND') {
+          // Couldn't find node, possibly due to a node restart/crash
+          // Try connecting again after a while
+          app.error(`Unable to connect to node: ${settings.device.address} not found. Retrying`);
+          setTimeout(() => {
+            restart(settings);
+          }, 30000);
+          return;
+        }
         // Configure often times out, we can ignore it
         app.error(`Failed to connect: ${e.message}`);
       })
