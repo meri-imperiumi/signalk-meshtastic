@@ -280,6 +280,69 @@ module.exports = (app) => {
       });
     }
 
+    function sendMeta() {
+      app.handleMessage('signalk-meshtastic', {
+        updates: [
+          {
+            meta: [
+              {
+                path: 'communication.meshtastic.airUtilTx',
+                value: {
+                  units: 'ratio',
+                  displayName: 'AirUtilTX',
+                  description: 'Utilization for the current channel, including well formed TX, RX and malformed RX (aka noise)',
+                },
+              },
+              {
+                path: 'communication.meshtastic.channelUtilization',
+                value: {
+                  units: 'ratio',
+                  displayName: 'ChUtil',
+                  description: 'Percent of airtime for transmission used within the last hour',
+                },
+              },
+              {
+                path: 'communication.meshtastic.longName',
+                value: {
+                  displayName: 'Long name',
+                  description: 'Full name for the node',
+                },
+              },
+              {
+                path: 'communication.meshtastic.shortName',
+                value: {
+                  displayName: 'Short name',
+                  description: 'A VERY short name, ideally two characters',
+                },
+              },
+              {
+                path: 'communication.meshtastic.nodeNum',
+                value: {
+                  displayName: 'Node number',
+                  description: 'A globally unique ID string for this node',
+                },
+              },
+              {
+                path: 'communication.meshtastic.nodesVisible',
+                value: {
+                  displayName: 'Nodes visible',
+                  description: 'Number of nodes currently visible to this node',
+                },
+              },
+              {
+                path: 'communication.meshtastic.uptime',
+                value: {
+                  displayName: 'Uptime',
+                  description: 'How long the device has been running since the last reboot',
+                  units: 's',
+                },
+              },
+            ],
+          },
+        ],
+      });
+    }
+
     app.setPluginStatus('Loading Meshtastic node database');
     readFile(nodeDbFile, 'utf-8')
       .catch(() => '{}')
@@ -291,6 +354,7 @@ module.exports = (app) => {
             nodes[nodeNum].seen = new Date(nodeDbData[nodeNum].seen);
           });
         app.setPluginStatus(`Connecting to Meshtastic node ${settings.device.address}`);
+        sendMeta();
         return TransportHTTP.create(settings.device.address);
       })
       .then((transport) => {
