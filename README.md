@@ -23,7 +23,7 @@ Many different kinds of Meshtastic devices are available, from basic microcontro
 
 Mostly works. Installation is a bit rough as you need to [enable JSR registry for NPM](https://jsr.io/docs/npm-compatibility#advanced-setup).
 
-Right now the connection to the Meshtastic device won't survive device reboots. In case of lost connection, Signal K needs to be restarted. See #3 as the tracking issue.
+Right now the connection to the Meshtastic device won't survive device reboots. In case of lost connection, Signal K needs to be restarted. See [#3](https://github.com/meri-imperiumi/signalk-meshtastic/issues/3) as the tracking issue.
 
 ## Features
 
