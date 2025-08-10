@@ -50,6 +50,8 @@ Mostly works. Installation is a bit rough as you need to [enable JSR registry fo
 
 LoRa is line-of-sight communications quite similarly to VHF. Communications range would greatly benefit from a Meshtastic repeater installed high in the mast. Similarly, repeaters on nearby hills or high buildings can be helpful. But just with the boat node and the node carried by crew it should be possible to reach ranges of over 1km.
 
+**Please note** that this plugin connects to the "boat node" as a client, meaning that while Signal K is running the regular Meshtastic client app won't be able to connect to the same device. It is a good idea to [enable remote administration](https://meshtastic.org/docs/configuration/radio/security/#admin-key) so that you can modify the settings of the device over LoRa.
+
 ## Getting started
 
 * Configure your "boat Meshtastic node" device so that it is connected to your boat network
