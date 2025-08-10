@@ -383,11 +383,11 @@ module.exports = (app) => {
                 },
                 {
                   path: 'communication.meshtastic.airUtilTx',
-                  value: packet.data.variant.value.airUtilTx,
+                  value: packet.data.variant.value.airUtilTx / 100,
                 },
                 {
                   path: 'communication.meshtastic.channelUtilization',
-                  value: packet.data.variant.value.channelUtilization,
+                  value: packet.data.variant.value.channelUtilization / 100,
                 },
                 {
                   path: `electrical.batteries.${packet.from}.capacity.stateOfCharge`,
