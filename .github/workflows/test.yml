@@ -19,11 +19,3 @@ jobs:
     - run: npm test
       env:
         CI: true
-  merge-me:
-    name: Auto-merge dependency updates
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-    - uses: ridedott/merge-me-action@v2.10.8
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
