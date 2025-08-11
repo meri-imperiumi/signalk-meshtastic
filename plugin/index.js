@@ -2,12 +2,7 @@
 const { readFile, writeFile } = require('fs/promises');
 const { join } = require('path');
 
-// Hack for Node.js compatibility of Meshtastic Deno lib
-const crypto = require('node:crypto');
-
 const Telemetry = require('./telemetry');
-
-global.crypto = crypto;
 
 // The ES modules we'll need to import
 let MeshDevice;
