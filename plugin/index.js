@@ -708,6 +708,7 @@ module.exports = (app) => {
       })
       .then(() => {
         app.setPluginStatus(`Connected to Meshtastic node ${settings.device.address}`);
+        device.setHeartbeatInterval(settings.device.heartbeat_interval || 60000);
       });
   };
   plugin.stop = () => {
@@ -777,6 +778,11 @@ module.exports = (app) => {
               type: 'integer',
               default: 6,
               title: 'Meshtastic log level',
+            },
+            heartbeat_interval: {
+              type: 'integer',
+              default: 60000,
+              title: 'Heartbeat inverval (milliseconds)',
             },
           },
         },
