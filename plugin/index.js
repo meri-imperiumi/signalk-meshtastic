@@ -365,6 +365,14 @@ module.exports = (app) => {
       })
       .then((transport) => {
         device = new MeshDevice(transport);
+        const errorListener = (e) => {
+          app.error(`Socket error: ${e.message}`);
+          if (e.code === 'ECONNRESET') {
+            device.transport.socket.removeListener('error', errorListener);
+            restart(settings);
+          }
+        };
+        device.transport.socket.on('error', errorListener);
 
         unsubscribes.meshtastic.push(
           device.events.onDeviceStatus.subscribe(() => {
