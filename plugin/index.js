@@ -681,6 +681,7 @@ module.exports = (app) => {
                   if (!crew.length) {
                     return;
                   }
+                  // TODO: Send alert instead of text for higher priority?
                   crew.reduce(
                     (prev, member) => prev.then(() => device.sendText(`\u0007 ${v.value.message}`, member.node, true, false)),
                     Promise.resolve(),
