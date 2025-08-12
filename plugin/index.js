@@ -409,6 +409,11 @@ module.exports = (app) => {
               // Not from crew
               return;
             }
+            if (message.data.toLowerCase() === 'ping') {
+              device.sendText('Pong', message.from, true, false)
+                .catch((e) => app.error(`Failed to send message: ${e.message}`));
+              return;
+            }
             const switching = message.data.match(/turn ([a-z0-9]+) (on|off)/i);
             if (settings.communications
               && settings.communications.digital_switching
