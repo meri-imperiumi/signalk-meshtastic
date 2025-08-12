@@ -31,6 +31,10 @@ function getNodeContext(app, node, nodeNum, settings) {
   // Match the "Some node name DE CALLSIGN" pattern
   const matched = node.longName.match(/.* DE ([A-Z0-9]{4,})$/);
   if (matched && matched[1]) {
+    if (node.mmsi) {
+      // We've already associated this node with an MMSI so no need for lookup
+      return `vessels.urn:mrn:imo:mmsi:${node.mmsi}`;
+    }
     const callsignPath = Object.keys(app.signalk.root.vessels)
       .find((vesselCtx) => {
         const vessel = app.signalk.root.vessels[vesselCtx];
@@ -62,7 +66,7 @@ function getNodeContext(app, node, nodeNum, settings) {
 function nodeToSignalK(app, node, nodeInfo, settings) {
   const context = getNodeContext(app, node, nodeInfo.num, settings);
   if (!context) {
-    return;
+    return undefined;
   }
   const values = [
     {
@@ -112,6 +116,8 @@ function nodeToSignalK(app, node, nodeInfo, settings) {
       },
     ],
   });
+
+  return context;
 }
 
 module.exports = (app) => {
@@ -381,7 +387,11 @@ module.exports = (app) => {
             nodes[nodeInfo.num].longName = nodeInfo.user.longName;
             nodes[nodeInfo.num].shortName = nodeInfo.user.shortName;
             nodes[nodeInfo.num].seen = new Date();
-            nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo, settings);
+            const ctx = nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo, settings);
+            if (ctx && ctx.indexOf('vessels.urn:mrn:imo:mmsi:') === 0) {
+              // We have an MMSI match, store it
+              nodes[nodeInfo.num].mmsi = ctx.split(':').at(-1);
+            }
             setConnectionStatus();
             writeFile(nodeDbFile, JSON.stringify(nodes, null, 2), 'utf-8')
               .catch((e) => {
