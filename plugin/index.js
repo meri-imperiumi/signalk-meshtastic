@@ -2,16 +2,12 @@
 const { readFile, writeFile } = require('fs/promises');
 const { join } = require('path');
 
-// Hack for Node.js compatibility of Meshtastic Deno lib
-const crypto = require('node:crypto');
-
 const Telemetry = require('./telemetry');
-
-global.crypto = crypto;
 
 // The ES modules we'll need to import
 let MeshDevice;
 let TransportHTTP;
+let TransportNode;
 let create;
 let toBinary;
 let Protobuf;
@@ -144,6 +140,10 @@ module.exports = (app) => {
     })
     .then((lib) => {
       TransportHTTP = lib.TransportHTTP;
+      return import('@meshtastic/transport-node');
+    })
+    .then((lib) => {
+      TransportNode = lib.TransportNode;
       return import('@bufbuild/protobuf');
     })
     .then((lib) => {
@@ -160,7 +160,7 @@ module.exports = (app) => {
     });
 
   plugin.start = (settings, restart) => {
-    if (!TransportHTTP) {
+    if (!Protobuf) {
       app.setPluginStatus('Waiting for Meshtastic library to load');
       setTimeout(() => {
         plugin.start(settings, restart);
@@ -361,10 +361,23 @@ module.exports = (app) => {
           });
         app.setPluginStatus(`Connecting to Meshtastic node ${settings.device.address}`);
         sendMeta();
-        return TransportHTTP.create(settings.device.address);
+        if (settings.device && settings.device.transport === 'http') {
+          return TransportHTTP.create(settings.device.address);
+        }
+        return TransportNode.create(settings.device.address);
       })
       .then((transport) => {
         device = new MeshDevice(transport);
+        if (device.transport.socket) {
+          const errorListener = (e) => {
+            app.error(`Socket error: ${e.message}`);
+            if (e.code === 'ECONNRESET') {
+              device.transport.socket.removeListener('error', errorListener);
+              restart(settings);
+            }
+          };
+          device.transport.socket.on('error', errorListener);
+        }
 
         unsubscribes.meshtastic.push(
           device.events.onDeviceStatus.subscribe(() => {
@@ -722,6 +735,15 @@ module.exports = (app) => {
         return device.configure();
       })
       .catch((e) => {
+        if (e.code === 'ENOTFOUND') {
+          // Couldn't find node, possibly due to a node restart/crash
+          // Try connecting again after a while
+          app.error(`Unable to connect to node: ${settings.device.address} not found. Retrying`);
+          setTimeout(() => {
+            restart(settings);
+          }, 30000);
+          return;
+        }
         // Configure often times out, we can ignore it
         app.error(`Failed to connect: ${e.message}`);
       })
@@ -779,9 +801,13 @@ module.exports = (app) => {
           properties: {
             transport: {
               type: 'string',
-              default: 'http',
+              default: 'tcp',
               title: 'How to connect to the boat Meshtastic node',
               oneOf: [
+                {
+                  const: 'tcp',
+                  title: 'TCP (nodes connected to same network, typically ESP32)',
+                },
                 {
                   const: 'http',
                   title: 'HTTP (nodes connected to same network, typically ESP32)',
