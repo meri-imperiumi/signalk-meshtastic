@@ -375,6 +375,9 @@ module.exports = (app) => {
             if (!nodes[nodeInfo.num]) {
               nodes[nodeInfo.num] = {};
             }
+            if (!nodeInfo.user) {
+              return;
+            }
             nodes[nodeInfo.num].longName = nodeInfo.user.longName;
             nodes[nodeInfo.num].shortName = nodeInfo.user.shortName;
             nodes[nodeInfo.num].seen = new Date();
