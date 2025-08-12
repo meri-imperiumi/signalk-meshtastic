@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.6.0",
-    "@meshtastic/core": "npm:@jsr/meshtastic__core@^2.6.4",
+    "@meshtastic/core": "^2.6.6-1",
     "@meshtastic/protobufs": "npm:@jsr/meshtastic__protobufs@^2.7.0",
     "@meshtastic/transport-http": "npm:@jsr/meshtastic__transport-http@^0.2.1"
   },
