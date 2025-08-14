@@ -27,7 +27,7 @@ Right now the connection to the Meshtastic device won't survive device reboots. 
 
 ## Features
 
-* Connect to a Meshtastic node
+* Connect to a Meshtastic node via HTTP, TCP, or Serial
 * Keep a persistent database of all seen Meshtastic nodes
 * Update Meshtastic node position from Signal K GNSS position
 * Send Signal K alerts as Meshtastic text messages to crew
@@ -46,7 +46,7 @@ Right now the connection to the Meshtastic device won't survive device reboots. 
 ## Requirements
 
 * This plugin running inside your Signal K installation
-* One [Meshtastic device](https://meshtastic.org/docs/hardware/devices/) running and connected to the same network (typically boat WiFi) as Signal K. This should be an [ESP32 based](https://meshtastic.org/docs/hardware/devices/heltec-automation/lora32/?heltec=v3) device for WiFi connectivity
+* One [Meshtastic device](https://meshtastic.org/docs/hardware/devices/) running and connected to the same network (typically boat WiFi) as Signal K. This should be an [ESP32 based](https://meshtastic.org/docs/hardware/devices/heltec-automation/lora32/?heltec=v3) device for WiFi connectivity. If using Serial connection, it can also be a NRF52 device
 * At least one additional Meshtastic device for the crew ashore. [Seeed T1000-e](https://meshtastic.org/docs/hardware/devices/seeed-studio/sensecap/card-tracker/) is a great option, but any battery-powered Meshtastic device will work
 * Optionally, a Meshtastic GPS tracker device installed in the dinghy
 
