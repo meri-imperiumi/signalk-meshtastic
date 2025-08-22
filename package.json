@@ -21,11 +21,15 @@
     "@bufbuild/protobuf": "^2.6.0",
     "@meshtastic/core": "^2.6.6-1",
     "@meshtastic/protobufs": "npm:@jsr/meshtastic__protobufs@^2.7.0",
-    "@meshtastic/transport-http": "^0.2.3-2"
+    "@meshtastic/transport-http": "^0.2.3-2",
+    "@meshtastic/transport-node": "^0.0.1-1"
   },
   "devDependencies": {
     "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.32.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
