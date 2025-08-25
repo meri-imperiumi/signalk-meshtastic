@@ -106,6 +106,7 @@ function nodeToSignalK(app, node, nodeInfo, settings) {
       {
         source: {
           label: 'signalk-meshtastic',
+          src: nodeInfo.num,
         },
         timestamp: new Date().toISOString(),
         values,
@@ -499,6 +500,7 @@ module.exports = (app) => {
                   {
                     source: {
                       label: 'signalk-meshtastic',
+                      src: packet.from,
                     },
                     timestamp: new Date().toISOString(),
                     values,
@@ -536,6 +538,7 @@ module.exports = (app) => {
                   {
                     source: {
                       label: 'signalk-meshtastic',
+                      src: packet.from,
                     },
                     timestamp: new Date().toISOString(),
                     values,
@@ -593,6 +596,7 @@ module.exports = (app) => {
                 {
                   source: {
                     label: 'signalk-meshtastic',
+                    src: position.from,
                   },
                   timestamp: new Date().toISOString(),
                   values,
