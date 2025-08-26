@@ -16,6 +16,19 @@ function getNodeContext(app, node, nodeNum, settings) {
   if (node.thisNode) {
     return 'vessels.self';
   }
+  if (settings.nodes && settings.nodes.length && settings.nodes
+    .find((settingNode) => {
+      if (settingNode.node !== nodeNum) {
+        return false;
+      }
+      if (settingNode.role !== 'onboard') {
+        return false;
+      }
+      return true;
+    })) {
+    // Onboard equipment
+    return 'vessels.self';
+  }
   // Create context for other nodes
   // Associate nodes with AIS vessels if callsign available
   if (!app.signalk.root.vessels) {
@@ -61,7 +74,7 @@ function getNodeContext(app, node, nodeNum, settings) {
 
 function nodeToSignalK(app, node, nodeInfo, settings) {
   const context = getNodeContext(app, node, nodeInfo.num, settings);
-  if (!context) {
+  if (!context || (context === 'vessels.self' && !node.thisNode)) {
     return undefined;
   }
   const values = [
@@ -472,19 +485,24 @@ module.exports = (app) => {
               return;
             }
             if (packet.data.variant && packet.data.variant.case === 'deviceMetrics') {
-              const values = [
-                {
-                  path: 'communication.meshtastic.uptime',
-                  value: packet.data.variant.value.uptimeSeconds,
-                },
-                {
-                  path: 'communication.meshtastic.airUtilTx',
-                  value: packet.data.variant.value.airUtilTx / 100,
-                },
-                {
-                  path: 'communication.meshtastic.channelUtilization',
-                  value: packet.data.variant.value.channelUtilization / 100,
-                },
+              const values = [];
+              if (context !== 'vessels.self' || nodes[packet.from].thisNode) {
+                values.push(
+                  {
+                    path: 'communication.meshtastic.uptime',
+                    value: packet.data.variant.value.uptimeSeconds,
+                  },
+                  {
+                    path: 'communication.meshtastic.airUtilTx',
+                    value: packet.data.variant.value.airUtilTx / 100,
+                  },
+                  {
+                    path: 'communication.meshtastic.channelUtilization',
+                    value: packet.data.variant.value.channelUtilization / 100,
+                  },
+                );
+              }
+              values.push(
                 {
                   path: `electrical.batteries.${packet.from}.capacity.stateOfCharge`,
                   value: packet.data.variant.value.batteryLevel / 100,
@@ -493,7 +511,7 @@ module.exports = (app) => {
                   path: `electrical.batteries.${packet.from}.voltage`,
                   value: packet.data.variant.value.voltage,
                 },
-              ];
+              );
               app.handleMessage('signalk-meshtastic', {
                 context,
                 updates: [
