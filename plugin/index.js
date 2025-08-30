@@ -817,7 +817,7 @@ module.exports = (app) => {
           properties: {
             transport: {
               type: 'string',
-              default: 'tcp',
+              default: 'http',
               title: 'How to connect to the boat Meshtastic node',
               oneOf: [
                 {
