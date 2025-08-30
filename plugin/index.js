@@ -380,22 +380,23 @@ module.exports = (app) => {
         }
         return TransportNode.create(settings.device.address);
       })
+      .catch((e) => {
+        // Couldn't find node, possibly due to a node restart/crash
+        // Try connecting again after a while
+        app.error(`Unable to connect to node ${settings.device.address}: ${e.message}. Retrying`);
+        setTimeout(() => {
+          restart(settings);
+        }, 30000);
+      })
       .then((transport) => {
         device = new MeshDevice(transport);
-        if (device.transport.socket) {
-          const errorListener = (e) => {
-            app.error(`Socket error: ${e.message}`);
-            if (e.code === 'ECONNRESET') {
-              device.transport.socket.removeListener('error', errorListener);
+        unsubscribes.meshtastic.push(
+          device.events.onDeviceStatus.subscribe((state) => {
+            setConnectionStatus();
+            if (state === 2) {
+              // Disconnected
               restart(settings);
             }
-          };
-          device.transport.socket.on('error', errorListener);
-        }
-
-        unsubscribes.meshtastic.push(
-          device.events.onDeviceStatus.subscribe(() => {
-            setConnectionStatus();
           }),
           device.events.onMyNodeInfo.subscribe((myNodeInfo) => {
             if (!nodes[myNodeInfo.myNodeNum]) {
@@ -757,21 +758,14 @@ module.exports = (app) => {
         return device.configure();
       })
       .catch((e) => {
-        if (e.code === 'ENOTFOUND') {
-          // Couldn't find node, possibly due to a node restart/crash
-          // Try connecting again after a while
-          app.error(`Unable to connect to node: ${settings.device.address} not found. Retrying`);
-          setTimeout(() => {
-            restart(settings);
-          }, 30000);
-          return;
-        }
         // Configure often times out, we can ignore it
-        app.error(`Failed to connect: ${e.message}`);
+        app.error(`Failed to connect: ${e.code} ${e.message}`);
       })
       .then(() => {
         app.setPluginStatus(`Connected to Meshtastic node ${settings.device.address}`);
-        device.setHeartbeatInterval(settings.device.heartbeat_interval || 60000);
+        if (device) {
+          device.setHeartbeatInterval(settings.device.heartbeat_interval || 60000);
+        }
       });
   };
   plugin.stop = () => {
