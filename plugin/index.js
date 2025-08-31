@@ -96,11 +96,62 @@ function nodeToSignalK(app, node, nodeInfo, settings) {
     values.push({
       path: 'navigation.position',
       value: {
-        latitude: nodeInfo.position.data.latitudeI * 1e-7,
-        longitude: nodeInfo.position.data.longitudeI * 1e-7,
+        latitude: nodeInfo.position.latitudeI * 1e-7,
+        longitude: nodeInfo.position.longitudeI * 1e-7,
       },
     });
   }
+
+  let role = 'client';
+  switch (nodeInfo.user.role) {
+    case 1: {
+      role = 'client_mute';
+      break;
+    }
+    case 2: {
+      role = 'router';
+      break;
+    }
+    case 3: {
+      role = 'router_client';
+      break;
+    }
+    case 4: {
+      role = 'repeater';
+      break;
+    }
+    case 5: {
+      role = 'tracker';
+      break;
+    }
+    case 6: {
+      role = 'sensor';
+      break;
+    }
+    case 7: {
+      role = 'tak';
+      break;
+    }
+    case 8: {
+      role = 'client_hidden';
+      break;
+    }
+    case 9: {
+      role = 'lost_and_found';
+      break;
+    }
+    case 10: {
+      role = 'tak_tracker';
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+  values.push({
+    path: 'communication.meshtastic.role',
+    value: role,
+  });
 
   if (context.indexOf('meshtastic.urn') === 0
     || (context.indexOf('vessels.urn') === 0
@@ -361,6 +412,13 @@ module.exports = (app) => {
                 value: {
                   displayName: 'Short name',
                   description: 'A VERY short name, ideally two characters',
+                },
+              },
+              {
+                path: 'communication.meshtastic.role',
+                value: {
+                  displayName: 'Role',
+                  description: '`User\'s role in the mesh',
                 },
               },
               {
