@@ -283,12 +283,20 @@ module.exports = (app) => {
         }
       }
       app.setPluginStatus(`${deviceState.charAt(0).toUpperCase() + deviceState.slice(1)} node at ${settings.device.address} can see ${nodesOnline.length} Meshtastic nodes`);
+      let selfId = 'XX';
+      Object.keys(nodes).forEach((nodeId) => {
+        if (nodes[nodeId].thisNode) {
+          selfId = nodeId;
+        }
+      });
+
       app.handleMessage('signalk-meshtastic', {
         context: 'vessels.self',
         updates: [
           {
             source: {
               label: 'signalk-meshtastic',
+              src: selfId,
             },
             timestamp: new Date().toISOString(),
             values: [
