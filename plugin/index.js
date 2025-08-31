@@ -240,7 +240,9 @@ module.exports = (app) => {
             // Ignore own node
             return false;
           }
-          if (nodes[nodeId].seen.getTime() > now.getTime() - 600000) {
+          // Online treshold, should be same as NUM_ONLINE_SECS in Meshtastic fw
+          const onlineSecs = 60 * 60 * 2;
+          if (nodes[nodeId].seen.getTime() > now.getTime() - (onlineSecs * 1000)) {
             // Seen in last 10min
             return true;
           }
