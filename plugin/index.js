@@ -460,7 +460,7 @@ module.exports = (app) => {
             }
             nodes[nodeInfo.num].longName = nodeInfo.user.longName;
             nodes[nodeInfo.num].shortName = nodeInfo.user.shortName;
-            nodes[nodeInfo.num].seen = new Date();
+            nodes[nodeInfo.num].seen = new Date(nodeInfo.lastHeard * 1000);
             const ctx = nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo, settings);
             if (ctx && ctx.indexOf('vessels.urn:mrn:imo:mmsi:') === 0) {
               // We have an MMSI match, store it
