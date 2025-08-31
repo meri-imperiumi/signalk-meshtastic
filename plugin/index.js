@@ -460,6 +460,10 @@ module.exports = (app) => {
             }
             nodes[nodeInfo.num].longName = nodeInfo.user.longName;
             nodes[nodeInfo.num].shortName = nodeInfo.user.shortName;
+            if (!nodes[nodeInfo.num].publicKey) {
+              // Only store the public key once to prevent spoofing
+              nodes[nodeInfo.num].publicKey = Buffer.from(nodeInfo.user.publicKey).toString('base64');
+            }
             nodes[nodeInfo.num].seen = new Date(nodeInfo.lastHeard * 1000);
             const ctx = nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo, settings);
             if (ctx && ctx.indexOf('vessels.urn:mrn:imo:mmsi:') === 0) {
