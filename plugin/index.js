@@ -308,6 +308,10 @@ module.exports = (app) => {
                 path: 'communication.meshtastic.deviceState',
                 value: deviceState,
               },
+              {
+                path: 'communication.meshtastic.deviceStateNum',
+                value: device.deviceStatus,
+              },
             ],
           },
         ],
@@ -368,6 +372,27 @@ module.exports = (app) => {
                 value: {
                   displayName: 'Device state',
                   description: 'State of connection to the Meshtastic device',
+                },
+              },
+              {
+                path: 'communication.meshtastic.deviceStateNum',
+                value: {
+                  displayName: 'Device state number',
+                  description: 'State of connection to the Meshtastic device as numeric value',
+                  zones: [
+                    {
+                      state: 'warn',
+                      lower: 0,
+                      upper: 2,
+                      message: 'Not connected to device',
+                    },
+                    {
+                      state: 'nominal',
+                      lower: 7,
+                      upper: 8,
+                      message: 'Connected and configured',
+                    },
+                  ],
                 },
               },
               {
