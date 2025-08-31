@@ -33,6 +33,7 @@ Right now the connection to the Meshtastic device won't survive device reboots. 
 * Send Signal K alerts as Meshtastic text messages to crew
 * Share weather station data from Signal K (wind, temperature, etc) over Meshtastic. Opt-in.
 * Control digital switching via Meshtastic direct messages (_"Turn decklight on"_). Opt-in.
+* Share Meshtastic waypoints for AIS targets via Meshtastic direct messages (_"Waypoint DH8613"_)
 * Associate Meshtastic nodes with other (AIS) vessels based on the `Some node name DE <callsign>` pattern
 * Show position-sharing Meshtastic nodes as vessels in Freeboard etc. Opt-in.
 
