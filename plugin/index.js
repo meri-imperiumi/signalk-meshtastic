@@ -354,6 +354,13 @@ module.exports = (app) => {
                 },
               },
               {
+                path: 'communication.meshtastic.deviceState',
+                value: {
+                  displayName: 'Device state',
+                  description: 'State of connection to the Meshtastic device',
+                },
+              },
+              {
                 path: 'communication.meshtastic.uptime',
                 value: {
                   displayName: 'Uptime',
