@@ -748,13 +748,18 @@ module.exports = (app) => {
                   if (!v.value.state || ['alarm', 'emergency'].indexOf(v.value.state) === -1) {
                     return;
                   }
+                  let bell = '';
+                  if (v.value.method && v.value.method.indexOf('sound')) {
+                    // Trigger audible bell on receiving Meshtastic devices
+                    bell = '\u0007 ';
+                  }
                   const crew = settings.nodes.filter((node) => node.role === 'crew');
                   if (!crew.length) {
                     return;
                   }
                   // TODO: Send alert instead of text for higher priority?
                   crew.reduce(
-                    (prev, member) => prev.then(() => device.sendText(`\u0007 ${v.value.message}`, member.node, true, false)),
+                    (prev, member) => prev.then(() => device.sendText(`${bell}${v.value.message}`, member.node, true, false)),
                     Promise.resolve(),
                   )
                     .catch((e) => app.error(`Failed to send alert: ${e.message}`));
