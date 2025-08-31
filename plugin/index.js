@@ -294,6 +294,10 @@ module.exports = (app) => {
                 path: 'communication.meshtastic.nodesVisible',
                 value: nodesOnline.length,
               },
+              {
+                path: 'communication.meshtastic.deviceState',
+                value: deviceState,
+              },
             ],
           },
         ],
@@ -480,6 +484,8 @@ module.exports = (app) => {
               // Unknown node
               return;
             }
+            nodes[packet.from].seen = new Date();
+            setConnectionStatus();
             const context = getNodeContext(app, nodes[packet.from], packet.from, settings);
             if (!context) {
               // Not a vessel
@@ -571,6 +577,8 @@ module.exports = (app) => {
               // Unknown node
               return;
             }
+            nodes[position.from].seen = new Date();
+            setConnectionStatus();
             const context = getNodeContext(app, nodes[position.from], position.from, settings);
             if (!context) {
               // Not a vessel
