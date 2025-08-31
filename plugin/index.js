@@ -92,6 +92,16 @@ function nodeToSignalK(app, node, nodeInfo, settings) {
     },
   ];
 
+  if (nodeInfo.position) {
+    values.push({
+      path: 'navigation.position',
+      value: {
+        latitude: nodeInfo.position.data.latitudeI * 1e-7,
+        longitude: nodeInfo.position.data.longitudeI * 1e-7,
+      },
+    });
+  }
+
   if (context.indexOf('meshtastic.urn') === 0
     || (context.indexOf('vessels.urn') === 0
       && context.indexOf(':98') !== -1)) {
