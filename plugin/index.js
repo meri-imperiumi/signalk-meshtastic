@@ -608,6 +608,7 @@ module.exports = (app) => {
                     return true;
                   }
                   if (vessel.communication
+                    && vessel.communication.callsignVhf
                     && vessel.communication.callsignVhf.toLowerCase() === lIdentifier) {
                     return true;
                   }
