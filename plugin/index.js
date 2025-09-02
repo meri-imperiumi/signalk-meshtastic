@@ -287,7 +287,7 @@ module.exports = (app) => {
       // If we haven't been called in 10min, restart plugin
       watchdog = setTimeout(() => {
         watchdogTriggered += 1;
-        console.log(`Watchdog ${watchdogTriggered} triggered, no packets seen in ${minutes}min`);
+        app.debug(`Watchdog ${watchdogTriggered} triggered, no packets seen in ${minutes}min`);
         app.error(`Watchdog ${watchdogTriggered} triggered, no packets seen in ${minutes}min`);
         restart(settings);
       }, 60000 * minutes);
@@ -495,14 +495,6 @@ module.exports = (app) => {
         }
         return TransportNode.create(settings.device.address);
       })
-      .catch((e) => {
-        // Couldn't find node, possibly due to a node restart/crash
-        // Try connecting again after a while
-        app.error(`Unable to connect to node ${settings.device.address}: ${e.message}. Retrying`);
-        setTimeout(() => {
-          restart(settings);
-        }, 30000);
-      })
       .then((transport) => {
         device = new MeshDevice(transport);
         unsubscribes.meshtastic.push(
@@ -510,6 +502,7 @@ module.exports = (app) => {
             setConnectionStatus();
             if (state === 2) {
               // Disconnected
+              app.debug('Received disconnect event, restarting');
               restart(settings);
             }
           }),
@@ -930,15 +923,20 @@ module.exports = (app) => {
         device.log.settings.minLevel = settings.device.log_level;
         return device.configure();
       })
-      .catch((e) => {
-        // Configure often times out, we can ignore it
-        app.error(`Failed to connect: ${e.code} ${e.message}`);
-      })
       .then(() => {
         app.setPluginStatus(`Connected to Meshtastic node ${settings.device.address}`);
         if (device) {
           device.setHeartbeatInterval(settings.device.heartbeat_interval || 60000);
         }
+      })
+      .catch((e) => {
+        // Couldn't find node, possibly due to a node restart/crash
+        // Try connecting again after a while
+        app.error(`Unable to connect to node ${settings.device.address}: ${e.code} ${e.message}. Retrying`);
+        setTimeout(() => {
+          app.debug('Triggered restart due to failed initial connect/configure');
+          restart(settings);
+        }, 30000);
       });
   };
   plugin.stop = () => {
@@ -953,10 +951,10 @@ module.exports = (app) => {
     unsubscribes.meshtastic.forEach((f) => f());
     unsubscribes.meshtastic = [];
 
-    if (!this.device) {
+    if (!device || device.deviceStatus === 2) {
       return;
     }
-    this.device.disconnect()
+    device.disconnect()
       .catch((e) => {
         app.error(`Failed to disconnect: ${e.message}`);
       });
