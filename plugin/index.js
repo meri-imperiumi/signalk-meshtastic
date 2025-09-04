@@ -4,6 +4,7 @@ const { join } = require('path');
 
 const Telemetry = require('./telemetry');
 const commands = require('./commands/index');
+const { vesselIcon } = require('./waypoint');
 
 // The ES modules we'll need to import
 let MeshDevice;
@@ -848,6 +849,25 @@ module.exports = (app) => {
                     Promise.resolve(),
                   )
                     .catch((e) => app.error(`Failed to send alert: ${e.message}`));
+                  if (v.path.indexOf('notifications.mob.') === 0) {
+                    // This is a notification about a MOB beacon, create waypoint
+                    const mmsi = v.path.split('.').at(-1);
+                    const mobVessel = app.signalk.root.vessels[`vessels.urn:mrn:imo:mmsi:${mmsi}`];
+                    if (!mobVessel || !mobVessel.navigation.position) {
+                      return;
+                    }
+                    const setWaypointMessage = create(Protobuf.Mesh.WaypointSchema, {
+                      id: mmsi,
+                      latitudeI: Math.floor(mobVessel.navigation.position.value.latitude / 1e-7),
+                      longitudeI: Math.floor(mobVessel.navigation.position.value.longitude / 1e-7),
+                      expire: Math.floor((new Date().getTime() / 1000) + (1 * 60 * 60)),
+                      name: mobVessel.name || `Beacon ${mmsi}`,
+                      description: `AIS beacon ${mmsi}`,
+                      icon: vesselIcon(mobVessel),
+                    });
+                    device.sendWaypoint(setWaypointMessage, 'broadcast', 0)
+                      .catch((e) => app.error(`Failed to send waypoint: ${e.message}`));
+                  }
                   return;
                 }
                 if (v.path === 'environment.wind.speedOverGround') {
