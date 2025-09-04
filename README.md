@@ -40,7 +40,6 @@ Mostly works. Installation is a bit rough as you need to [enable JSR registry fo
 ## Planned features
 
 * Guard mode to alert if the tracked dinghy moves
-* Alerts for crew or dighy tracker devices running low on battery
 * Keeping a mileage log for the dinghy
 * More text commands over Meshtastic to query vessel status etc
 
