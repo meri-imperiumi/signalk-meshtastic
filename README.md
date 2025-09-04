@@ -7,7 +7,7 @@ This plugin enables vessels running [Signal K](https://signalk.org) to interact 
 
 Being a mesh network, there is no need for external telecommunications infrastructure or monthly payments. This means communication between Meshtastic devices onboard and on shore can work just as well in the Finnish Archipelago Sea as in the Tuamotus. In more densely populated places communications may benefit from other Meshtastic users relaying the messages, making it possible to communicate with the boat from for example across a city.
 
-This plugin is designed to work with regular unmodified Meshtastic devices and settings. You can keep your boat and other Meshtastic nodes either in the public channel, or [set up your private mesh](https://meshtastic.org/docs/configuration/tips/#creating-a-private-primary-with-default-secondary). With a private channel the location of your devices won't be visible to the public, and communications between them will be encrypted.
+This plugin is designed to work with regular unmodified Meshtastic devices and settings. You can keep your boat and other Meshtastic nodes either in the public channel, or [set up your private mesh](https://meshtastic.org/docs/configuration/tips/#not-sharing-your-location). With a private channel the location of your devices won't be visible to the public, and communications between them will be encrypted.
 
 Many different kinds of Meshtastic devices are available, from basic microcontroller boards to ready-to-go consumer devices. Some are entirely standalone with screens and keyboards, and others need a smartphone app.
 
