@@ -279,7 +279,7 @@ module.exports = (app) => {
 
     function setWatchdog() {
       // Clear previous watchdog
-      console.log(`Watchdog ${watchdogTriggered} reset`);
+      app.debug(`Watchdog ${watchdogTriggered} reset`);
       if (watchdog) {
         clearTimeout(watchdog);
       }
@@ -924,6 +924,7 @@ module.exports = (app) => {
         return device.configure();
       })
       .then(() => {
+        app.debug(`Connected and configured with Meshtastic node ${settings.device.address}`);
         app.setPluginStatus(`Connected to Meshtastic node ${settings.device.address}`);
         if (device) {
           device.setHeartbeatInterval(settings.device.heartbeat_interval || 60000);
