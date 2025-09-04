@@ -800,23 +800,7 @@ module.exports = (app) => {
                   if (!settings.communications || !settings.communications.send_position) {
                     return;
                   }
-                  const setPositionMessage = create(Protobuf.Admin.AdminMessageSchema, {
-                    payloadVariant: {
-                      case: 'setFixedPosition',
-                      value: create(Protobuf.Mesh.PositionSchema, {
-                        latitudeI: Math.floor(v.value.latitude / 1e-7),
-                        longitudeI: Math.floor(v.value.longitude / 1e-7),
-                      }),
-                    },
-                  });
-                  device.sendPacket(
-                    toBinary(Protobuf.Admin.AdminMessageSchema, setPositionMessage),
-                    Protobuf.Portnums.PortNum.ADMIN_APP,
-                    'self',
-                    0,
-                    true,
-                    false,
-                  )
+                  device.setFixedPosition(v.value.latitude, v.value.longitude)
                     .catch((e) => app.error(`Failed to set node position: ${e.message}`));
                   return;
                 }
