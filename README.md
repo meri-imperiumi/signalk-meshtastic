@@ -7,7 +7,7 @@ This plugin enables vessels running [Signal K](https://signalk.org) to interact 
 
 Being a mesh network, there is no need for external telecommunications infrastructure or monthly payments. This means communication between Meshtastic devices onboard and on shore can work just as well in the Finnish Archipelago Sea as in the Tuamotus. In more densely populated places communications may benefit from other Meshtastic users relaying the messages, making it possible to communicate with the boat from for example across a city.
 
-This plugin is designed to work with regular unmodified Meshtastic devices and settings. You can keep your boat and other Meshtastic nodes either in the public channel, or [set up your private mesh](https://meshtastic.org/docs/configuration/tips/#creating-a-private-primary-with-default-secondary). With a private mesh the location of your devices won't be visible to the public, and communications between them will be encrypted.
+This plugin is designed to work with regular unmodified Meshtastic devices and settings. You can keep your boat and other Meshtastic nodes either in the public channel, or [set up your private mesh](https://meshtastic.org/docs/configuration/tips/#creating-a-private-primary-with-default-secondary). With a private channel the location of your devices won't be visible to the public, and communications between them will be encrypted.
 
 Many different kinds of Meshtastic devices are available, from basic microcontroller boards to ready-to-go consumer devices. Some are entirely standalone with screens and keyboards, and others need a smartphone app.
 
@@ -22,8 +22,6 @@ Many different kinds of Meshtastic devices are available, from basic microcontro
 ## Status
 
 Mostly works. Installation is a bit rough as you need to [enable JSR registry for NPM](https://jsr.io/docs/npm-compatibility#advanced-setup).
-
-Right now the connection to the Meshtastic device won't survive device reboots. In case of lost connection, Signal K needs to be restarted. See [#3](https://github.com/meri-imperiumi/signalk-meshtastic/issues/3) as the tracking issue.
 
 ## Features
 
@@ -48,19 +46,20 @@ Right now the connection to the Meshtastic device won't survive device reboots. 
 
 * This plugin running inside your Signal K installation
 * One [Meshtastic device](https://meshtastic.org/docs/hardware/devices/) running and connected to the same network (typically boat WiFi) as Signal K. This should be an [ESP32 based](https://meshtastic.org/docs/hardware/devices/heltec-automation/lora32/?heltec=v3) device for WiFi connectivity
-* At least one additional Meshtastic device for the crew ashore. [Seeed T1000-e](https://meshtastic.org/docs/hardware/devices/seeed-studio/sensecap/card-tracker/) is a great option, but any battery-powered Meshtastic device will work
+* At least one additional Meshtastic device for the crew ashore. [Seeed T1000-e](https://meshtastic.org/docs/hardware/devices/seeed-studio/sensecap/card-tracker/) is a great option, but any battery-powered Meshtastic device will work. Having a device for each crew member is even better. In busy areas these should be set to [`CLIENT_MUTE` role](https://meshtastic.org/blog/choosing-the-right-device-role/)
 * Optionally, a Meshtastic GPS tracker device installed in the dinghy
+* Optionally, a [Meshtastic mast-top repeater](https://www.printables.com/model/1396221-meshtastic-boat-module-masthead) for greatly increased communications range
 
-LoRa is line-of-sight communications quite similarly to VHF. Communications range would greatly benefit from a Meshtastic repeater installed high in the mast. Similarly, repeaters on nearby hills or high buildings can be helpful. But just with the boat node and the node carried by crew it should be possible to reach ranges of over 1km.
+LoRa is line-of-sight communications quite similarly to VHF. Communications range would greatly benefit from a Meshtastic repeater installed high in the mast. Similarly, repeaters on nearby hills or high buildings can be helpful. But just with the boat node and the node carried by crew it should be possible to reach ranges of over 1km. We've been able to communicate at over 8km distances in our early tests in Curacao.
 
-**Please note** that this plugin connects to the "boat node" as a client, meaning that while Signal K is running the regular Meshtastic client app won't be able to connect to the same device. It is a good idea to [enable remote administration](https://meshtastic.org/docs/configuration/radio/security/#admin-key) so that you can modify the settings of the device over LoRa.
+**Please note** that this plugin connects to the "boat node" as a client, meaning that while Signal K is running, the regular Meshtastic client app _won't be able to connect to the same device_. It is a good idea to [enable remote administration](https://meshtastic.org/docs/configuration/radio/security/#admin-key) so that you can modify the settings of the device over LoRa.
 
 ## Getting started
 
 * Configure your "boat Meshtastic node" device so that it is connected to your boat network
 * If you have a valid Ship Station License, add your callsign to the long name of the node. Typical pattern is `<Vessel name> DE <Callsign>`, for example _"Lille Oe DE DH8613"_<br>
   (yes, you need to use `DE` also for non-German vessels. This is radio slang for "this is", not a country code)
-* Install and enable this plugin
+* Install and enable this plugin, and set up the connection details (IP address etc)
 * Wait for some minutes for the plugin to see nearby Meshtastic nodes
 * Configure plugin and set appropriate roles for the crew and dinghy tracker Meshtastic devices
 
