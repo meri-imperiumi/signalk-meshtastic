@@ -4,6 +4,7 @@ const regex = /waypoint ([a-z0-9]+)( ([0-9]+)h)?/i;
 
 module.exports = {
   crewOnly: true,
+  example: 'Waypoint <callsign or boat name>',
   accept: (msg) => {
     // FIXME: Add support for vessel names with spaces
     const waypointTgt = msg.data.match(regex);
@@ -12,7 +13,7 @@ module.exports = {
     }
     return false;
   },
-  handle: (msg, device, app, create, Protobuf) => {
+  handle: (msg, settings, device, app, create, Protobuf) => {
     const waypointTgt = msg.data.match(regex);
     const identifier = waypointTgt[1];
     const length = waypointTgt[3] || 1;

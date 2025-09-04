@@ -1,5 +1,6 @@
 module.exports = {
   crewOnly: true,
+  example: 'Turn <switch name> on',
   accept: (msg, settings) => {
     const switching = msg.data.match(/turn ([a-z0-9]+) (on|off)/i);
     if (settings.communications
@@ -9,7 +10,7 @@ module.exports = {
     }
     return false;
   },
-  handle: (msg, device, app) => {
+  handle: (msg, settings, device, app) => {
     const switching = msg.data.match(/turn ([a-z0-9]+) (on|off)/i);
     const light = switching[1];
     const value = switching[2] === 'on';
