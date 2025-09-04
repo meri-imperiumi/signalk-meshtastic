@@ -3,7 +3,7 @@ const { readFile, writeFile } = require('fs/promises');
 const { join } = require('path');
 
 const Telemetry = require('./telemetry');
-const { vesselIcon } = require('./waypoint');
+const commands = require('./commands/index');
 
 // The ES modules we'll need to import
 let MeshDevice;
@@ -550,87 +550,28 @@ module.exports = (app) => {
               // Not DM
               return;
             }
-            const crew = settings.nodes
-              .filter((node) => {
-                if (node.role === 'crew') {
-                  return true;
-                }
-                return false;
-              })
-              .map((node) => node.node);
-            if (crew.indexOf(message.from) === -1) {
-              // Not from crew
-              return;
-            }
-            if (message.data.toLowerCase() === 'ping') {
-              device.sendText('Pong', message.from, true, false)
-                .catch((e) => app.error(`Failed to send message: ${e.message}`));
-              return;
-            }
-            const switching = message.data.match(/turn ([a-z0-9]+) (on|off)/i);
-            if (settings.communications
-              && settings.communications.digital_switching
-              && switching) {
-              const light = switching[1];
-              const value = switching[2] === 'on';
-              app.putSelfPath(`electrical.switches.${light}.state`, value, (res) => {
-                if (res.state !== 'COMPLETED') {
-                  return;
-                }
-                if (res.statusCode !== 200) {
-                  device.sendText(res.message, message.from, true, false)
-                    .catch((e) => app.error(`Failed to send message: ${e.message}`));
-                  return;
-                }
-                device.sendText(`OK, ${light} is ${switching[2]}`, message.from, true, false)
-                  .catch((e) => app.error(`Failed to send message: ${e.message}`));
-              });
-            }
-            const waypointTgt = message.data.match(/waypoint ([a-z0-9]+)( ([0-9]+)h)?/i);
-            if (waypointTgt) {
-              const identifier = waypointTgt[1];
-              const length = waypointTgt[3] || 1;
-              const waypointVesselCtx = Object.keys(app.signalk.root.vessels)
-                .find((vesselCtx) => {
-                  const vessel = app.signalk.root.vessels[vesselCtx];
-                  const lIdentifier = identifier.toLowerCase();
-                  if (vessel.mmsi === identifier) {
-                    return true;
-                  }
-                  if (vessel.name && vessel.name.toLowerCase() === lIdentifier) {
-                    return true;
-                  }
-                  if (vessel.communication
-                    && vessel.communication.callsignVhf
-                    && vessel.communication.callsignVhf.toLowerCase() === lIdentifier) {
-                    return true;
-                  }
-                  return false;
+            const fromCrew = commands.isFromCrew(message, settings);
+            Object.keys(commands).forEach((cmd) => {
+              if (cmd === 'isFromCrew') {
+                return;
+              }
+              const command = commands[cmd];
+              if (command.crewOnly && !fromCrew) {
+                return;
+              }
+              if (!command.accept(message, settings)) {
+                return;
+              }
+              command.handle(message, settings, device, app, create, Protobuf)
+                .then(() => {
+                  app.debug(`Message "${message.data}" handled by command ${command}`);
+                })
+                .catch((err) => {
+                  app.debug(`Message "${message.data}" failed by command ${command}`);
+                  app.debug(err.message);
+                  app.error(err.message);
                 });
-              if (!waypointVesselCtx) {
-                device.sendText(`Unable to find vessel ${identifier}`, message.from, true, false)
-                  .catch((e) => app.error(`Failed to send message: ${e.message}`));
-                return;
-              }
-              const waypointVessel = app.signalk.root.vessels[waypointVesselCtx];
-              if (!waypointVessel.navigation.position.value
-                || !waypointVessel.navigation.position.value.latitude) {
-                device.sendText(`Vessel ${identifier} has no known position`, message.from, true, false)
-                  .catch((e) => app.error(`Failed to send message: ${e.message}`));
-                return;
-              }
-              const setWaypointMessage = create(Protobuf.Mesh.WaypointSchema, {
-                id: waypointVessel.mmsi,
-                latitudeI: Math.floor(waypointVessel.navigation.position.value.latitude / 1e-7),
-                longitudeI: Math.floor(waypointVessel.navigation.position.value.longitude / 1e-7),
-                expire: Math.floor((new Date().getTime() / 1000) + (length * 60 * 60)),
-                name: waypointVessel.name,
-                description: `AIS vessel ${waypointVessel.mmsi}`,
-                icon: vesselIcon(waypointVessel),
-              });
-              device.sendWaypoint(setWaypointMessage, 'broadcast', 0)
-                .catch((e) => app.error(`Failed to send waypoint: ${e.message}`));
-            }
+            });
           }),
           device.events.onTelemetryPacket.subscribe((packet) => {
             if (!nodes[packet.from]) {
