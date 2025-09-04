@@ -557,14 +557,11 @@ module.exports = (app) => {
               }
               const command = commands[cmd];
               if (command.crewOnly && !fromCrew) {
-                app.debug(`Message "${message.data}" not sent by crew`);
                 return;
               }
               if (!command.accept(message, settings)) {
-                app.debug(`Message "${message.data}" not handled by command ${command}`);
                 return;
               }
-              app.debug(`Handling message "${message.data}" by command ${command}`);
               command.handle(message, settings, device, app, create, Protobuf)
                 .then(() => {
                   app.debug(`Message "${message.data}" handled by command ${command}`);
