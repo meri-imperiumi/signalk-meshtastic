@@ -26,14 +26,15 @@ Mostly works. Installation is a bit rough as you need to [enable JSR registry fo
 ## Features
 
 * Connect to a Meshtastic node
-* Keep a persistent database of all seen Meshtastic nodes
+  * Keep a persistent database of all seen Meshtastic nodes
 * Update Meshtastic node position from Signal K GNSS position
 * Send Signal K alerts as Meshtastic text messages to crew
+* Control Signal K with Meshtastic direct messages:
+  * Share Meshtastic waypoints for AIS targets (_"Waypoint DH8613"_)
+  * Control digital switching (_"Turn decklight on"_). Opt-in.
 * Share weather station data from Signal K (wind, temperature, etc) over Meshtastic. Opt-in.
-* Control digital switching via Meshtastic direct messages (_"Turn decklight on"_). Opt-in.
-* Share Meshtastic waypoints for AIS targets via Meshtastic direct messages (_"Waypoint DH8613"_)
-* Associate Meshtastic nodes with other (AIS) vessels based on the `Some node name DE <callsign>` pattern
 * Show position-sharing Meshtastic nodes as vessels in Freeboard etc. Opt-in.
+  * Associate Meshtastic nodes with other (AIS) vessels based on the `Some node name DE <callsign>` pattern
 
 ## Planned features
 
