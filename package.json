@@ -1,7 +1,7 @@
 {
   "name": "@meri-imperiumi/signalk-meshtastic",
   "version": "1.0.0",
-  "description": "Signal K plugin for interfacing with the Meshtasti LoRa network",
+  "description": "Signal K plugin for interfacing with the Meshtastic LoRa network",
   "scripts": {
     "test": "eslint ."
   },
