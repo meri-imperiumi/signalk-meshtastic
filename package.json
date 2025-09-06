@@ -1,13 +1,14 @@
 {
   "name": "@meri-imperiumi/signalk-meshtastic",
   "version": "1.0.0",
-  "description": "Signal K plugin for interfacing with the Meshtastic LoRa network",
+  "description": "Signal K plugin for interfacing with the Meshtastic LoRa mesh network",
   "scripts": {
     "test": "eslint ."
   },
   "keywords": [
     "meshtastic",
     "signalk-node-server-plugin",
+    "signalk-category-ais",
     "signalk-category-hardware"
   ],
   "main": "plugin/index.js",
