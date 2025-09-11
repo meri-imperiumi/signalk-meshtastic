@@ -5,7 +5,7 @@ This plugin enables vessels running [Signal K](https://signalk.org) to interact 
 
 If desired, telemetry and position information can also be shared between multiple Meshtastic-using vessels, making it effectively a "pseudo-AIS" system.
 
-![Basic Meshtastic communications](./doc/meshtastic-bequia.png)
+![Basic Meshtastic communications](https://github.com/meri-imperiumi/signalk-meshtastic/raw/main/doc/meshtastic-bequia.png)
 
 Being a mesh network, there is no need for external telecommunications infrastructure or monthly payments. This means communication between Meshtastic devices onboard and on shore can work just as well in the Finnish Archipelago Sea as in the Tuamotus. In more densely populated places communications may benefit from other Meshtastic users relaying the messages, making it possible to communicate with the boat across a city.
 
@@ -27,7 +27,7 @@ In production use on several boats.
 
 ## Features
 
-* Connect to a Meshtastic node
+* Connect to a Meshtastic node via HTTP, TCP, or Serial
   * Keep a persistent database of all seen Meshtastic nodes
 * Update Meshtastic node position from Signal K GNSS position
 * Send Signal K alerts as Meshtastic text messages to crew
@@ -48,7 +48,8 @@ In production use on several boats.
 ## Requirements
 
 * This plugin running inside your Signal K installation
-* One [Meshtastic device](https://meshtastic.org/docs/hardware/devices/) running and connected to the same network (typically boat WiFi) as Signal K. This should be an [ESP32 based](https://meshtastic.org/docs/hardware/devices/heltec-automation/lora32/?heltec=v3) device for WiFi connectivity
+* One [Meshtastic device](https://meshtastic.org/docs/hardware/devices/) running and connected to the same network (typically boat WiFi) as Signal K. This should be an [ESP32 based](https://meshtastic.org/docs/hardware/devices/heltec-automation/lora32/?heltec=v3) device for WiFi connectivity.<br>
+  If using Serial connection, it can also be a nRF52 device
 * At least one additional Meshtastic device for the crew ashore. [Seeed T1000-e](https://meshtastic.org/docs/hardware/devices/seeed-studio/sensecap/card-tracker/) is a great option, but any battery-powered Meshtastic device will work. Having a device for each crew member is even better. In busy areas these should be set to [`CLIENT_MUTE` role](https://meshtastic.org/blog/choosing-the-right-device-role/)
 * Optionally, a Meshtastic GPS tracker device installed in the dinghy
 * Optionally, a [Meshtastic mast-top repeater](https://www.printables.com/model/1396221-meshtastic-boat-module-masthead) for greatly increased communications range
@@ -66,13 +67,13 @@ LoRa is line-of-sight communications quite similarly to VHF. Communications rang
 * Wait for some minutes for the plugin to see nearby Meshtastic nodes
 * Configure plugin and set appropriate roles for the crew and dinghy tracker Meshtastic devices
 
-![](./doc/config-crew-role.png)
+![](https://github.com/meri-imperiumi/signalk-meshtastic/raw/main/doc/config-crew-role.png)
 
 ## Telemetry sent to Meshtastic
 
 If enabled, your "boat node" will transmit the following telemetry to Meshtastic. This enables tracking various important metrics about your boat also remotely. They are visible in the device details in your Meshtastic app:
 
-![](./doc/telemetry.png)
+![](https://github.com/meri-imperiumi/signalk-meshtastic/raw/main/doc/telemetry.png)
 
 Metrics used:
 
