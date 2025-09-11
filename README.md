@@ -23,7 +23,7 @@ Many different kinds of Meshtastic devices are available, from basic microcontro
 
 ## Status
 
-Mostly works. Installation is a bit rough as you need to [enable JSR registry for NPM](https://jsr.io/docs/npm-compatibility#advanced-setup).
+In production use on several boats.
 
 ## Features
 
