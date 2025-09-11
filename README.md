@@ -85,3 +85,8 @@ Metrics used:
 * Battery current (from `electrical.batteries.house.current`)
 * If anchored, distance to anchor (from `navigation.anchor.distanceFromBow`)
 * If not anchored, distance is water depth (from `environment.depth.belowSurface`)
+
+## Changes
+
+* 1.0.0 (2025-09-11)
+  - Initial release with HTTP and TCP transports
