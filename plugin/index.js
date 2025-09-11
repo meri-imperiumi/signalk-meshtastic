@@ -1,4 +1,3 @@
-/* eslint import/no-unresolved: 1 */
 const { readFile, writeFile } = require('fs/promises');
 const { join } = require('path');
 
