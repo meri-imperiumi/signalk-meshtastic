@@ -1,4 +1,3 @@
-/* eslint import/no-unresolved: 1 */
 const { readFile, writeFile } = require('fs/promises');
 const { join } = require('path');
 
@@ -213,6 +212,7 @@ module.exports = (app) => {
   import('@meshtastic/core')
     .then((lib) => {
       MeshDevice = lib.MeshDevice;
+      Protobuf = lib.Protobuf;
       return import('@meshtastic/transport-http');
     })
     .then((lib) => {
@@ -226,10 +226,6 @@ module.exports = (app) => {
     .then((lib) => {
       create = lib.create;
       toBinary = lib.toBinary;
-      return import('@meshtastic/protobufs');
-    })
-    .then((lib) => {
-      Protobuf = lib;
       app.setPluginStatus('Meshtastic library loaded');
     })
     .catch((e) => {
@@ -237,7 +233,7 @@ module.exports = (app) => {
     });
 
   plugin.start = (settings, restart) => {
-    if (!Protobuf) {
+    if (!toBinary) {
       app.setPluginStatus('Waiting for Meshtastic library to load');
       setTimeout(() => {
         plugin.start(settings, restart);
