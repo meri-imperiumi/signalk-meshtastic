@@ -5,7 +5,7 @@ This plugin enables vessels running [Signal K](https://signalk.org) to interact 
 
 If desired, telemetry and position information can also be shared between multiple Meshtastic-using vessels, making it effectively a "pseudo-AIS" system.
 
-![Basic Meshtastic communications](./doc/meshtastic-bequia.png)
+![Basic Meshtastic communications](https://github.com/meri-imperiumi/signalk-meshtastic/raw/main/doc/meshtastic-bequia.png)
 
 Being a mesh network, there is no need for external telecommunications infrastructure or monthly payments. This means communication between Meshtastic devices onboard and on shore can work just as well in the Finnish Archipelago Sea as in the Tuamotus. In more densely populated places communications may benefit from other Meshtastic users relaying the messages, making it possible to communicate with the boat across a city.
 
