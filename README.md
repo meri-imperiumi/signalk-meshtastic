@@ -89,5 +89,7 @@ Metrics used:
 
 ## Changes
 
+* 1.1.0 (2025-09-11)
+  - Added support for Serial transport with the Meshtastic device
 * 1.0.0 (2025-09-11)
   - Initial release with HTTP and TCP transports
