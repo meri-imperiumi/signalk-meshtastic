@@ -21,6 +21,8 @@ Many different kinds of Meshtastic devices are available, from basic microcontro
 > - Boat Node rebroadcasts the message.
 > - Parents’ node, unable to hear the kids directly, receives it through Boat Node.
 
+There's also an [introduction to signalk-meshtastic](https://signalk.org/2025/signalk-meshtastic/) on the Signal K website.
+
 ## Status
 
 In production use on several boats.
