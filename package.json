@@ -5,6 +5,14 @@
   "scripts": {
     "test": "eslint ."
   },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/meri-imperiumi/signalk-meshtastic.git"
+  },
+  "bugs": {
+    "url": "https://github.com/meri-imperiumi/signalk-meshtastic/issues"
+  },
+  "homepage": "https://github.com/meri-imperiumi/signalk-meshtastic#readme",
   "keywords": [
     "meshtastic",
     "signalk-node-server-plugin",
