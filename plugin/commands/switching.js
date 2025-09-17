@@ -24,8 +24,6 @@ module.exports = {
           return;
         }
         resolve();
-        device.sendText(res.message, msg.from, true, false)
-          .catch((e) => app.error(`Failed to send message: ${e.message}`));
       });
     })
       .then(() => device.sendText(`OK, ${light} is ${switching[2]}`, msg.from, true, false));
