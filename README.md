@@ -91,6 +91,9 @@ Metrics used:
 
 ## Changes
 
+* 1.1.1 (2025-09-18)
+  - Fixed empty response text message to digital switching actions
+  - Added support for the proposed Signal K MOB position specification
 * 1.1.0 (2025-09-11)
   - Added support for Serial transport with the Meshtastic device
 * 1.0.0 (2025-09-11)
