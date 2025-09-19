@@ -146,6 +146,14 @@ function nodeToSignalK(app, node, nodeInfo, settings) {
       role = 'tak_tracker';
       break;
     }
+    case 11: {
+      role = 'router_late';
+      break;
+    }
+    case 12: {
+      role = 'client_base';
+      break;
+    }
     default: {
       break;
     }
