@@ -91,6 +91,9 @@ Metrics used:
 
 ## Changes
 
+* 1.1.2 (2025-09-25)
+  - Added support for the new roles from Meshtastic 2.7 (`ROUTER_LATE` and `CLIENT_BASE`)
+  - Fixed issue with sending a bell with alerts that have sound enabled
 * 1.1.1 (2025-09-18)
   - Fixed empty response text message to digital switching actions
   - Added support for the proposed Signal K MOB position specification
