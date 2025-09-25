@@ -462,7 +462,7 @@ module.exports = (app) => {
                     {
                       state: 'warn',
                       lower: 0,
-                      upper: 2,
+                      upper: 5,
                       message: 'Not connected to device',
                     },
                     {
