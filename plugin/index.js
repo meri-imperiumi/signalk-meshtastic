@@ -831,7 +831,7 @@ module.exports = (app) => {
                     return;
                   }
                   let bell = '';
-                  if (v.value.method && v.value.method.indexOf('sound')) {
+                  if (v.value.method && v.value.method.indexOf('sound') !== -1) {
                     // Trigger audible bell on receiving Meshtastic devices
                     bell = '\u0007 ';
                   }
