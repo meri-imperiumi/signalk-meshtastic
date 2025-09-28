@@ -91,6 +91,8 @@ Metrics used:
 
 ## Changes
 
+* 1.2.1 (2025-09-28)
+  - Fixed issue with Signal K servers that don't have navigation.position set
 * 1.2.0 (2025-09-28)
   - Safety for nodes in DB that don't have a "last seen" timestamp
   - Made connection status notifications clearer
