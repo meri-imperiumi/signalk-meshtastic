@@ -312,12 +312,12 @@ module.exports = (app) => {
             // Ignore own node
             return false;
           }
-          // Online treshold, should be same as NUM_ONLINE_SECS in Meshtastic fw
-          const onlineSecs = 60 * 60 * 2;
           if (!nodes[nodeId].seen) {
             // Somehow never seen
             return false;
           }
+          // Online treshold, should be same as NUM_ONLINE_SECS in Meshtastic fw
+          const onlineSecs = 60 * 60 * 2;
           if (nodes[nodeId].seen.getTime() > now.getTime() - (onlineSecs * 1000)) {
             // Seen in last 10min
             return true;
@@ -500,7 +500,9 @@ module.exports = (app) => {
         Object.keys(nodeDbData)
           .forEach((nodeNum) => {
             nodes[nodeNum] = nodeDbData[nodeNum];
-            nodes[nodeNum].seen = new Date(nodeDbData[nodeNum].seen);
+            if (nodeDbData[nodeNum].seen) {
+              nodes[nodeNum].seen = new Date(nodeDbData[nodeNum].seen);
+            }
           });
         app.setPluginStatus(`Connecting to Meshtastic node ${settings.device.address}`);
         sendMeta();
