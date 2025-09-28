@@ -822,6 +822,10 @@ module.exports = (app) => {
                     // Not connected to Meshtastic yet
                     return;
                   }
+                  if (v.value.latitude === null) {
+                    // No position
+                    return;
+                  }
                   if (!settings.communications || !settings.communications.send_position) {
                     return;
                   }
