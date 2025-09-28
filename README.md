@@ -91,9 +91,10 @@ Metrics used:
 
 ## Changes
 
-* 1.1.3 (git main)
+* 1.2.0 (2025-09-28)
   - Safety for nodes in DB that don't have a "last seen" timestamp
   - Made connection status notifications clearer
+  - Attempt at support for Node.js older than 22.x
 * 1.1.2 (2025-09-25)
   - Added support for the new roles from Meshtastic 2.7 (`ROUTER_LATE` and `CLIENT_BASE`)
   - Fixed issue with sending a bell with alerts that have sound enabled

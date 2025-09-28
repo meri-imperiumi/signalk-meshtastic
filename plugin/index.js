@@ -5,6 +5,13 @@ const Telemetry = require('./telemetry');
 const commands = require('./commands/index');
 const { vesselIcon } = require('./waypoint');
 
+if (!global.crypto) {
+  // Older Node.js versions (like the one bundled in Venus OS
+  // don't have crypto module available
+  // eslint-disable-next-line global-require
+  global.crypto = require('node:crypto');
+}
+
 // The ES modules we'll need to import
 let MeshDevice;
 let TransportHTTP;
