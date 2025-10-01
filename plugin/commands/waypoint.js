@@ -47,7 +47,7 @@ module.exports = {
       latitudeI: Math.floor(waypointVessel.navigation.position.value.latitude / 1e-7),
       longitudeI: Math.floor(waypointVessel.navigation.position.value.longitude / 1e-7),
       expire: Math.floor((new Date().getTime() / 1000) + (length * 60 * 60)),
-      name: waypointVessel.name,
+      name: waypointVessel.name || waypointVessel.mmsi,
       description: `AIS vessel ${waypointVessel.mmsi}`,
       icon: vesselIcon(waypointVessel),
     });
