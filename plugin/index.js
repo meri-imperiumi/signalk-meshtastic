@@ -278,7 +278,7 @@ module.exports = (app) => {
         return;
       }
       const telemetryMessage = create(Protobuf.Telemetry.TelemetrySchema, {
-        time: new Date().getTime() / 1000,
+        time: Math.floor(new Date().getTime() / 1000),
         variant: {
           case: 'environmentMetrics',
           value: create(Protobuf.Telemetry.EnvironmentMetricsSchema, values),
