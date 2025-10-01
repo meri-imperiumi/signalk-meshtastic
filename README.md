@@ -91,9 +91,10 @@ Metrics used:
 
 ## Changes
 
-* 1.2.2 (git main)
+* 1.2.2 (2025-10-01)
   - Set "last seen" timestamp of nodes based on packet payloads, not the time they're received
   - Send timestamp with telemetry
+  - Fixed issue with persising node-to-vessel matches from `DE <callsign>`
 * 1.2.1 (2025-09-28)
   - Fixed issue with Signal K servers that don't have navigation.position set
 * 1.2.0 (2025-09-28)
