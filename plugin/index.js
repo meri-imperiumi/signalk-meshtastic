@@ -569,7 +569,12 @@ module.exports = (app) => {
             if (!nodes[packet.from]) {
               nodes[packet.from] = {};
             }
-            nodes[packet.from].seen = new Date();
+            if (packet.rxTime) {
+              const packetDate = new Date(packet.rxTime * 1000);
+              if (packetDate > nodes[packet.from].seen) {
+                nodes[packet.from].seen = packetDate;
+              }
+            }
             setConnectionStatus();
           }),
           device.events.onMessagePacket.subscribe((message) => {
@@ -605,7 +610,12 @@ module.exports = (app) => {
               // Unknown node
               return;
             }
-            nodes[packet.from].seen = new Date();
+            if (packet.data && packet.data.time) {
+              const telemetryDate = new Date(packet.data.time * 1000);
+              if (telemetryDate > nodes[packet.from].seen) {
+                nodes[packet.from].seen = telemetryDate;
+              }
+            }
             setConnectionStatus();
             const context = getNodeContext(app, nodes[packet.from], packet.from, settings);
             if (!context) {
@@ -698,7 +708,12 @@ module.exports = (app) => {
               // Unknown node
               return;
             }
-            nodes[position.from].seen = new Date();
+            if (position.data && position.data.time) {
+              const positionDate = new Date(position.data.time * 1000);
+              if (positionDate > nodes[position.from].seen) {
+                nodes[position.from].seen = positionDate;
+              }
+            }
             setConnectionStatus();
             const context = getNodeContext(app, nodes[position.from], position.from, settings);
             if (!context) {
