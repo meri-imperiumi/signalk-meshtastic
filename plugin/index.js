@@ -311,6 +311,13 @@ module.exports = (app) => {
       }, 60000 * minutes);
     }
 
+    function writeNodeDb() {
+      writeFile(nodeDbFile, JSON.stringify(nodes, null, 2), 'utf-8')
+        .catch((e) => {
+          app.error(`Failed to store node DB: ${e.message}`);
+        });
+    }
+
     function setConnectionStatus() {
       setWatchdog();
       const now = new Date();
@@ -560,10 +567,7 @@ module.exports = (app) => {
               nodes[nodeInfo.num].mmsi = ctx.split(':').at(-1);
             }
             setConnectionStatus();
-            writeFile(nodeDbFile, JSON.stringify(nodes, null, 2), 'utf-8')
-              .catch((e) => {
-                app.error(`Failed to store node DB: ${e.message}`);
-              });
+            writeNodeDb();
           }),
           device.events.onMeshPacket.subscribe((packet) => {
             if (!nodes[packet.from]) {
@@ -766,6 +770,11 @@ module.exports = (app) => {
                 },
               ],
             });
+            if (context && context.indexOf('vessels.urn:mrn:imo:mmsi:') === 0) {
+              // We have an MMSI match, store it
+              nodes[position.from].mmsi = context.split(':').at(-1);
+            }
+            writeNodeDb();
           }),
         );
 
