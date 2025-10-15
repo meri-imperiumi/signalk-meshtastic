@@ -757,7 +757,7 @@ module.exports = (app) => {
               },
               {
                 path: 'navigation.gnss.antennaAltitude',
-                value: position.data.altitude,
+                value: position.data.altitude || 0,
               },
             ];
             app.handleMessage('signalk-meshtastic', {
