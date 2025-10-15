@@ -101,7 +101,7 @@ function nodeToSignalK(app, node, nodeInfo, settings) {
     },
   ];
 
-  if (nodeInfo.position) {
+  if (nodeInfo.position && Number.isFinite(nodeInfo.position.latitudeI)) {
     values.push({
       path: 'navigation.position',
       value: {
@@ -847,7 +847,8 @@ module.exports = (app) => {
                     // Not connected to Meshtastic yet
                     return;
                   }
-                  if (v.value.latitude === null) {
+                  if (!Number.isFinite(v.value.latitude)
+                    || !Number.isFinite(v.value.longitude)) {
                     // No position
                     return;
                   }
@@ -911,7 +912,7 @@ module.exports = (app) => {
                         }
                       }
                     }
-                    if (!mobPosition || !mobPosition.latitude) {
+                    if (!mobPosition || !Number.isFinite(mobPosition.latitude)) {
                       return;
                     }
                     const setWaypointMessage = create(Protobuf.Mesh.WaypointSchema, {
