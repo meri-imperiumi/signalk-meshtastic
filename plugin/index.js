@@ -561,10 +561,13 @@ module.exports = (app) => {
               nodes[nodeInfo.num].publicKey = Buffer.from(nodeInfo.user.publicKey).toString('base64');
             }
             nodes[nodeInfo.num].seen = new Date(nodeInfo.lastHeard * 1000);
-            const ctx = nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo, settings);
-            if (ctx && ctx.indexOf('vessels.urn:mrn:imo:mmsi:') === 0) {
-              // We have an MMSI match, store it
-              nodes[nodeInfo.num].mmsi = ctx.split(':').at(-1);
+            if (nodes[nodeInfo.num].seen > Date.now() - (1000 * 60 * 60 * 24 * 2)) {
+              // Node seen less than a two days ago, register with SK
+              const ctx = nodeToSignalK(app, nodes[nodeInfo.num], nodeInfo, settings);
+              if (ctx && ctx.indexOf('vessels.urn:mrn:imo:mmsi:') === 0) {
+                // We have an MMSI match, store it
+                nodes[nodeInfo.num].mmsi = ctx.split(':').at(-1);
+              }
             }
             setConnectionStatus();
             writeNodeDb();
