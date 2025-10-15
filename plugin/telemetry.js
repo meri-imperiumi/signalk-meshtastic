@@ -14,16 +14,16 @@ class Telemetry {
 
   toMeshtastic() {
     const values = {};
-    if (this.data['environment.outside.temperature']) {
+    if (Number.isFinite(this.data['environment.outside.temperature'])) {
       values.temperature = this.data['environment.outside.temperature'] - 273.15;
     }
-    if (this.data['environment.outside.relativeHumidity']) {
+    if (Number.isFinite(this.data['environment.outside.relativeHumidity'])) {
       values.relativeHumidity = this.data['environment.outside.relativeHumidity'] * 100;
     }
-    if (this.data['environment.outside.pressure']) {
+    if (Number.isFinite(this.data['environment.outside.pressure'])) {
       values.barometricPressure = this.data['environment.outside.pressure'] / 100;
     }
-    if (this.data['environment.wind.directionTrue']) {
+    if (Number.isFinite(this.data['environment.wind.directionTrue'])) {
       values.windDirection = Math.floor(this.data['environment.wind.directionTrue'] * (180 / Math.PI));
     }
     if (this.data['environment.wind.speedOverGround'] && this.data['environment.wind.speedOverGround'].length) {
@@ -38,16 +38,16 @@ class Telemetry {
       // Clear wind history
       this.data['environment.wind.speedOverGround'] = [];
     }
-    if (this.data['electrical.batteries.house.voltage']) {
+    if (Number.isFinite(this.data['electrical.batteries.house.voltage'])) {
       values.voltage = this.data['electrical.batteries.house.voltage'];
     }
-    if (this.data['electrical.batteries.house.current']) {
+    if (Number.isFinite(this.data['electrical.batteries.house.current'])) {
       values.current = this.data['electrical.batteries.house.current'] * 1000;
     }
-    if (this.data['navigation.anchor.distanceFromBow']) {
+    if (Number.isFinite(this.data['navigation.anchor.distanceFromBow'])) {
       // Using distance is a bit silly here as the unit is mm, but what can we do
       values.distance = this.data['navigation.anchor.distanceFromBow'] * 1000;
-    } else if (this.data['environment.depth.belowSurface']) {
+    } else if (Number.isFinite(this.data['environment.depth.belowSurface'])) {
       // If not anchored, report depth as distance. Still mm.
       values.distance = this.data['environment.depth.belowSurface'] * 1000;
     }
@@ -55,6 +55,9 @@ class Telemetry {
   }
 
   updateWindSpeed(windSpeed) {
+    if (!Number.isFinite(windSpeed)) {
+      return;
+    }
     if (!this.data['environment.wind.speedOverGround']) {
       this.data['environment.wind.speedOverGround'] = [];
     }
