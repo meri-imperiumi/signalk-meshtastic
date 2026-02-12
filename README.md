@@ -91,7 +91,7 @@ Metrics used:
 
 ## Changes
 
-* 1.2.3 (2024-10-15)
+* 1.2.3 (2025-10-15)
   - Nodes that haven't been seen in last two days are no longer registered to Signal K data structure
   - Added safeties for various non-numeric telemetry and coordinate values
 * 1.2.2 (2025-10-01)
