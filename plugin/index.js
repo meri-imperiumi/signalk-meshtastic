@@ -511,7 +511,13 @@ module.exports = (app) => {
     readFile(nodeDbFile, 'utf-8')
       .catch(() => '{}')
       .then((nodeDb) => {
-        const nodeDbData = JSON.parse(nodeDb);
+        let nodeDbData;
+        try {
+          nodeDbData = JSON.parse(nodeDb);
+        } catch (e) {
+          app.debug('Error reading Node DB file', e);
+          nodeDbData = {};
+        }
         Object.keys(nodeDbData)
           .forEach((nodeNum) => {
             nodes[nodeNum] = nodeDbData[nodeNum];
