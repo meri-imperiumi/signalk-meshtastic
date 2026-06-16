@@ -31,6 +31,7 @@ In production use on several boats.
 
 * Connect to a Meshtastic node via HTTP or TCP
   * Keep a persistent database of all seen Meshtastic nodes
+  * Note: Serial transport support was removed in 1.3.0 to comply with [postinstall deprecation](https://demo.signalk.org/documentation/Developing/Plugins/Publishing_to_The_AppStore.html#important-avoid-install-time-scripts)
 * Update Meshtastic node position from Signal K GNSS position
 * Send Signal K alerts as Meshtastic text messages to crew
   * MOB alerts (for example from [signalk-mob-notifier](https://github.com/meri-imperiumi/signalk-mob-notifier)) also send a waypoint to the MOB beacon
