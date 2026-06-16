@@ -2,5 +2,8 @@
   "extends": "airbnb-base",
   "parserOptions": {
     "ecmaVersion": 11
+  },
+  "rules": {
+    "linebreak-style": "warn"
   }
 }
