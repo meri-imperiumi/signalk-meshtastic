@@ -1,3 +1,5 @@
+* 1.3.0 (git main)
+  - Removed support for serial connections as they require post-install scripts
 * 1.2.4 (2026-02-15)
   - Corrupted Node DB file should no longer crash the plugin
 * 1.2.3 (2025-10-15)

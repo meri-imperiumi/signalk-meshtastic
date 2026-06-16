@@ -237,10 +237,6 @@ module.exports = (app) => {
     })
     .then((lib) => {
       TransportNode = lib.TransportNode;
-      return import('@meshtastic/transport-node-serial');
-    })
-    .then((lib) => {
-      TransportNodeSerial = lib.TransportNodeSerial;
       return import('@bufbuild/protobuf');
     })
     .then((lib) => {
@@ -529,9 +525,6 @@ module.exports = (app) => {
         sendMeta();
         if (settings.device && settings.device.transport === 'http') {
           return TransportHTTP.create(settings.device.address);
-        }
-        if (settings.device && settings.device.transport === 'serial') {
-          return TransportNodeSerial.create(settings.device.address);
         }
         return TransportNode.create(settings.device.address);
       })
@@ -1028,10 +1021,6 @@ module.exports = (app) => {
                 {
                   const: 'http',
                   title: 'HTTP (nodes connected to same network, typically ESP32)',
-                },
-                {
-                  const: 'serial',
-                  title: 'Serial port (use full path to serial device as "address")',
                 },
               ],
             },
