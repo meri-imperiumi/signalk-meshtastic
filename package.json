@@ -23,6 +23,7 @@
   "signalk-plugin-enabled-by-default": false,
   "signalk": {
     "appIcon": "./doc/mpwrd.png",
+    "displayName": "Meshtastic Integration",
     "screenshots": [
       "./doc/meshtastic-bequia.png",
       "./doc/config-crew-role.png",
