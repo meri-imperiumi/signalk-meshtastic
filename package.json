@@ -16,8 +16,8 @@
   "keywords": [
     "meshtastic",
     "signalk-node-server-plugin",
-    "signalk-category-ais",
-    "signalk-category-hardware"
+    "signalk-category-hardware",
+    "signalk-category-notifications"
   ],
   "main": "plugin/index.js",
   "signalk-plugin-enabled-by-default": false,
