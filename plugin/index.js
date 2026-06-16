@@ -992,7 +992,7 @@ module.exports = (app) => {
   plugin.schema = () => {
     function nodeList() {
       if (Object.keys(nodes).length === 0) {
-        return undefined;
+        return [];
       }
       return Object.keys(nodes)
         .filter((nodeId) => {
