@@ -16,7 +16,6 @@ if (!global.crypto) {
 let MeshDevice;
 let TransportHTTP;
 let TransportNode;
-let TransportNodeSerial;
 let create;
 let toBinary;
 let Protobuf;
