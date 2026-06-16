@@ -21,6 +21,14 @@
   ],
   "main": "plugin/index.js",
   "signalk-plugin-enabled-by-default": false,
+  "signalk": {
+    "appIcon": "./doc/mpwrd.png",
+    "screenshots": [
+      "./doc/meshtastic-bequia.png",
+      "./doc/config-crew-role.png",
+      "./doc/telemetry.png"
+    ]
+  },
   "author": "Henri Bergius <henri.bergius@iki.fi>",
   "license": "GPLV3",
   "publishConfig": {
