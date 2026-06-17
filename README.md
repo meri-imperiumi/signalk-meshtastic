@@ -91,4 +91,4 @@ Metrics used:
 
 ## Changes
 
-See <CHANGELOG.md>
+See [Changelog](CHANGELOG.md)

@@ -5,15 +5,15 @@
 - Removed support for serial connections as they require post-install scripts
 
 ## [1.2.4] - 2026-02-15
-### Changed
+### Fixed
 - Corrupted Node DB file should no longer crash the plugin
 
 ## [1.2.3] - 2025-10-15
-### Added
-- Added safeties for various non-numeric telemetry and coordinate values
-
 ### Changed
 - Nodes that haven't been seen in last two days are no longer registered to Signal K data structure
+
+### Fixed
+- Added safeties for various non-numeric telemetry and coordinate values
 
 ## [1.2.2] - 2025-10-01
 ### Changed
