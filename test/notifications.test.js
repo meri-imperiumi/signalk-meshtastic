@@ -53,4 +53,76 @@ describe('notification sending', () => {
     );
     assert.equal(result, false);
   });
+  it('with alert switching rapidly on and off, it should send only first one', () => {
+    const episodes = new Map();
+    const result1 = shouldWeSendNotification(
+      'notifications.communication.meshtastic.deviceStateNum',
+      {
+        state: 'alarm',
+        message: 'Meshtastic disconnect',
+      },
+      episodes,
+      settingsSendAlerts,
+    );
+    assert.equal(result1, true, 'first alarm should be sent');
+    const result2 = shouldWeSendNotification(
+      'notifications.communication.meshtastic.deviceStateNum',
+      {
+        state: 'nominal',
+        message: 'Meshtastic connected and configured',
+      },
+      episodes,
+      settingsSendAlerts,
+    );
+    assert.equal(result2, false, 'clearing should not be sent');
+    const result3 = shouldWeSendNotification(
+      'notifications.communication.meshtastic.deviceStateNum',
+      {
+        state: 'alarm',
+        message: 'Meshtastic disconnect',
+      },
+      episodes,
+      settingsSendAlerts,
+    );
+    assert.equal(result3, false, 'second alarm should not be sent');
+  });
+  it('with alert re-issuing after previous expired, it should send', () => {
+    const episodes = new Map();
+    const startTime = new Date();
+    const result1 = shouldWeSendNotification(
+      'notifications.communication.meshtastic.deviceStateNum',
+      {
+        state: 'alarm',
+        message: 'Meshtastic disconnect',
+      },
+      episodes,
+      settingsSendAlerts,
+      startTime,
+    );
+    assert.equal(result1, true, 'first alarm should be sent');
+    const clearTime = new Date(startTime.getTime() + 10000);
+    const result2 = shouldWeSendNotification(
+      'notifications.communication.meshtastic.deviceStateNum',
+      {
+        state: 'nominal',
+        message: 'Meshtastic connected and configured',
+      },
+      episodes,
+      settingsSendAlerts,
+      clearTime,
+    );
+    assert.equal(result2, false, 'clearing should not be sent');
+    const restartTime = new Date(clearTime.getTime() + 400000);
+    const result3 = shouldWeSendNotification(
+      'notifications.communication.meshtastic.deviceStateNum',
+      {
+        state: 'alarm',
+        message: 'Meshtastic disconnect',
+      },
+      episodes,
+      settingsSendAlerts,
+      restartTime,
+    );
+    assert.equal(result3, true, 'second alarm should be sent');
+  });
 });
