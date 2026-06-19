@@ -3,7 +3,8 @@
   "version": "1.3.0",
   "description": "Signal K plugin for interfacing with the Meshtastic LoRa mesh network",
   "scripts": {
-    "test": "eslint ."
+    "pretest": "eslint .",
+    "test": "node --test test/*.test.js"
   },
   "repository": {
     "type": "git",

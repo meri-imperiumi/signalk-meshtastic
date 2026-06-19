@@ -241,7 +241,9 @@ module.exports = (app) => {
     .then((lib) => {
       create = lib.create;
       toBinary = lib.toBinary;
-      app.setPluginStatus('Meshtastic library loaded');
+      if (app.setPluginStatus) {
+        app.setPluginStatus('Meshtastic library loaded');
+      }
     })
     .catch((e) => {
       app.setPluginError(`Failed to load Meshtastic library: ${e.message}`);
@@ -249,7 +251,12 @@ module.exports = (app) => {
 
   plugin.start = (settings, restart) => {
     if (!toBinary) {
-      app.setPluginStatus('Waiting for Meshtastic library to load');
+      if (app.setPluginStatus) {
+        app.setPluginStatus('Waiting for Meshtastic library to load');
+      }
+      if (!app.getDataDirPath) {
+        return;
+      }
       setTimeout(() => {
         plugin.start(settings, restart);
       }, 1);
@@ -502,7 +509,9 @@ module.exports = (app) => {
       });
     }
 
-    app.setPluginStatus('Loading Meshtastic node database');
+    if (app.setPluginStatus) {
+      app.setPluginStatus('Loading Meshtastic node database');
+    }
     readFile(nodeDbFile, 'utf-8')
       .catch(() => '{}')
       .then((nodeDb) => {
