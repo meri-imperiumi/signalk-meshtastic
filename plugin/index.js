@@ -3,7 +3,7 @@ const { join } = require('path');
 
 const Telemetry = require('./telemetry');
 const commands = require('./commands/index');
-const { vesselIcon } = require('./waypoint');
+const { sendMOB } = require('./waypoint');
 const { sendNotification } = require('./notifications');
 
 if (!global.crypto) {
@@ -877,42 +877,7 @@ module.exports = (app) => {
                   sendNotification(v.path, v.value, episodes, settings, device, app);
                   if (v.path.indexOf('notifications.mob.') === 0) {
                     // This is a notification about a MOB beacon, create waypoint
-                    let mobPosition;
-                    let mobVessel = {
-                      name: 'MOB beacon',
-                      mmsi: '9712234567',
-                    };
-                    if (v.value.data && v.value.data.mmsi) {
-                      mobVessel.mmsi = v.value.data.mmsi;
-                    }
-                    if (v.value.position) {
-                      // signalk-mob-notifier and freeboard-sk include position in the notification
-                      mobPosition = v.value.position;
-                    } else {
-                      // See if the MOB can be found from Signal K tree
-                      const mmsi = v.path.split('.').at(-1);
-                      mobVessel = app.signalk.root.vessels[`vessels.urn:mrn:imo:mmsi:${mmsi}`];
-                      if (mobVessel && mobVessel.navigation.position) {
-                        mobPosition = mobVessel.navigation.position;
-                        if (mobPosition.value) {
-                          mobPosition = mobPosition.value;
-                        }
-                      }
-                    }
-                    if (!mobPosition || !Number.isFinite(mobPosition.latitude)) {
-                      return;
-                    }
-                    const setWaypointMessage = create(Protobuf.Mesh.WaypointSchema, {
-                      id: mobVessel.mmsi,
-                      latitudeI: Math.floor(mobPosition.latitude / 1e-7),
-                      longitudeI: Math.floor(mobPosition.longitude / 1e-7),
-                      expire: Math.floor((new Date().getTime() / 1000) + (1 * 60 * 60)),
-                      name: mobVessel.name || `Beacon ${mobVessel.mmsi}`,
-                      description: `MOB beacon ${mobVessel.mmsi}`,
-                      icon: vesselIcon(mobVessel),
-                    });
-                    device.sendWaypoint(setWaypointMessage, 'broadcast', 0)
-                      .catch((e) => app.error(`Failed to send waypoint: ${e.message}`));
+                    sendMOB(v.path, v.value, app, device, create, Protobuf);
                   }
                   return;
                 }

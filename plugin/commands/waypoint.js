@@ -1,4 +1,4 @@
-const { vesselIcon } = require('../waypoint');
+const { vesselIcon, sendWaypoint } = require('../waypoint');
 
 const regex = /waypoint ([a-z0-9]+)( ([0-9]+)h)?/i;
 
@@ -42,15 +42,16 @@ module.exports = {
       || !waypointVessel.navigation.position.value.latitude) {
       return device.sendText(`Vessel ${identifier} has no known position`, msg.from, true, false);
     }
-    const setWaypointMessage = create(Protobuf.Mesh.WaypointSchema, {
-      id: waypointVessel.mmsi,
-      latitudeI: Math.floor(waypointVessel.navigation.position.value.latitude / 1e-7),
-      longitudeI: Math.floor(waypointVessel.navigation.position.value.longitude / 1e-7),
-      expire: Math.floor((new Date().getTime() / 1000) + (length * 60 * 60)),
-      name: waypointVessel.name || waypointVessel.mmsi,
-      description: `AIS vessel ${waypointVessel.mmsi}`,
-      icon: vesselIcon(waypointVessel),
-    });
-    return device.sendWaypoint(setWaypointMessage, 'broadcast', 0);
+    return sendWaypoint(
+      waypointVessel.mmsi,
+      waypointVessel.navigation.position.value,
+      waypointVessel.name || waypointVessel.mmsi,
+      `AIS vessel ${waypointVessel.mmsi}`,
+      vesselIcon(waypointVessel),
+      length,
+      'broadcast',
+      create,
+      Protobuf,
+    );
   },
 };
