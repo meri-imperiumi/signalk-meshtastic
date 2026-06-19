@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0] - 2026-06-19
+### Added
+- Notifications that clear and reissue rapidly are only sent once
+
+### Changed
+- Refactored notification and waypoint sending to their own helper functions
+
 ## [1.3.0] - 2026-06-16
 ### Removed
 - Removed support for serial connections as they require post-install scripts
