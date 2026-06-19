@@ -4,6 +4,7 @@ const { join } = require('path');
 const Telemetry = require('./telemetry');
 const commands = require('./commands/index');
 const { vesselIcon } = require('./waypoint');
+const { sendNotification } = require('./notifications');
 
 if (!global.crypto) {
   // Older Node.js versions (like the one bundled in Venus OS
@@ -19,6 +20,9 @@ let TransportNode;
 let create;
 let toBinary;
 let Protobuf;
+
+// Keep a map of ongoing notification episodes
+const episodes = new Map();
 
 function getNodeContext(app, node, nodeNum, settings) {
   if (node.thisNode) {
@@ -870,34 +874,7 @@ module.exports = (app) => {
                   return;
                 }
                 if (v.path.indexOf('notifications.') === 0) {
-                  if (!device) {
-                    // Not connected to Meshtastic yet
-                    return;
-                  }
-                  if (!settings.communications || !settings.communications.send_alerts) {
-                    return;
-                  }
-                  if (!v.value) {
-                    return;
-                  }
-                  if (!v.value.state || ['alarm', 'emergency'].indexOf(v.value.state) === -1) {
-                    return;
-                  }
-                  let bell = '';
-                  if (v.value.method && v.value.method.indexOf('sound') !== -1) {
-                    // Trigger audible bell on receiving Meshtastic devices
-                    bell = '\u0007 ';
-                  }
-                  const crew = settings.nodes.filter((node) => node.role === 'crew');
-                  if (!crew.length) {
-                    return;
-                  }
-                  // TODO: Send alert instead of text for higher priority?
-                  crew.reduce(
-                    (prev, member) => prev.then(() => device.sendText(`${bell}${v.value.message}`, member.node, true, false)),
-                    Promise.resolve(),
-                  )
-                    .catch((e) => app.error(`Failed to send alert: ${e.message}`));
+                  sendNotification(v.path, v.value, episodes, settings, device, app);
                   if (v.path.indexOf('notifications.mob.') === 0) {
                     // This is a notification about a MOB beacon, create waypoint
                     let mobPosition;
@@ -981,6 +958,7 @@ module.exports = (app) => {
     unsubscribes.signalk = [];
     unsubscribes.meshtastic.forEach((f) => f());
     unsubscribes.meshtastic = [];
+    episodes.clear();
 
     if (!device || device.deviceStatus === 2) {
       return;
