@@ -1,8 +1,4 @@
-function shouldWeSendNotification(path, value, episodes, settings, device) {
-  if (!device) {
-    // Not connected to Meshtastic yet
-    return false;
-  }
+function shouldWeSendNotification(path, value, episodes, settings) {
   if (!settings.communications || !settings.communications.send_alerts) {
     return false;
   }
@@ -13,20 +9,26 @@ function shouldWeSendNotification(path, value, episodes, settings, device) {
     'alarm',
     'emergency',
   ];
-  if (!value.state || !statesToSend.contains(value.state)) {
-    return false;
-  }
-  const crew = settings.nodes.filter((node) => node.role === 'crew');
-  if (!crew.length) {
-    // No crew nodes to send to
+  if (!value.state || !statesToSend.includes(value.state)) {
     return false;
   }
   return true;
 }
 
 function sendNotification(path, value, episodes, settings, device, app) {
+  if (!device) {
+    // Not connected to Meshtastic yet
+    return false;
+  }
+
   if (!shouldWeSendNotification(path, value, episodes, settings, device)) {
     return Promise.resolve();
+  }
+
+  const crew = settings.nodes.filter((node) => node.role === 'crew');
+  if (!crew.length) {
+    // No crew nodes to send to
+    return false;
   }
 
   let bell = '';
@@ -36,7 +38,6 @@ function sendNotification(path, value, episodes, settings, device, app) {
   }
 
   // Send alert to each crew member
-  const crew = settings.nodes.filter((node) => node.role === 'crew');
   return crew.reduce(
     (prev, member) => prev.then(() => device.sendText(`${bell}${value.message}`, member.node, true, false)),
     Promise.resolve(),
@@ -45,5 +46,6 @@ function sendNotification(path, value, episodes, settings, device, app) {
 }
 
 module.exports = {
+  shouldWeSendNotification,
   sendNotification,
 };
