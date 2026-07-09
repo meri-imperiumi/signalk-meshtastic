@@ -71,6 +71,8 @@ LoRa is line-of-sight communications quite similarly to VHF. Communications rang
 
 ![](https://github.com/meri-imperiumi/signalk-meshtastic/raw/main/doc/config-crew-role.png)
 
+**OpenCPN users:** OpenCPN [has a bug](https://github.com/OpenCPN/OpenCPN/issues/5224#issuecomment-4929856487) that crashes OpenCPN with the long source identifiers sent by this plugin. Disable the "Populate the Meshtastic node that was the source" option in plugin settings to make OpenCPN not crash.
+
 ## Telemetry sent to Meshtastic
 
 If enabled, your "boat node" will transmit the following telemetry to Meshtastic. This enables tracking various important metrics about your boat also remotely. They are visible in the device details in your Meshtastic app:
