@@ -4,6 +4,7 @@
     "ecmaVersion": 11
   },
   "rules": {
-    "linebreak-style": "warn"
+    "linebreak-style": "warn",
+    "max-len": "warn"
   }
 }

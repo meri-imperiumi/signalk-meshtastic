@@ -1,5 +1,5 @@
 # Changelog
-## [Unreleased]
+## [1.4.1] - 2026-07-10
 ### Fixed
 - Added setting to disable populating delta source IDs as that [crashes OpenCPN](https://github.com/OpenCPN/OpenCPN/issues/5224#issuecomment-4929856487)
 
