@@ -202,7 +202,7 @@ function nodeToSignalK(app, node, nodeInfo, settings) {
           label: 'signalk-meshtastic',
           src: (settings
             && settings.communications
-            && settings.communications.populate_delta_source) ? nodeInfo.num : undefined,
+            && settings.communications.populate_delta_sources) ? nodeInfo.num : undefined,
         },
         timestamp: new Date().toISOString(),
         values,
@@ -397,7 +397,7 @@ module.exports = (app) => {
               label: 'signalk-meshtastic',
               src: (settings
                 && settings.communications
-                && settings.communications.populate_delta_source) ? selfId : undefined,
+                && settings.communications.populate_delta_sources) ? selfId : undefined,
             },
             timestamp: new Date().toISOString(),
             values: [
@@ -680,7 +680,7 @@ module.exports = (app) => {
                       label: 'signalk-meshtastic',
                       src: (settings
                         && settings.communications
-                        && settings.communications.populate_delta_source) ? packet.from : undefined,
+                        && settings.communications.populate_delta_sources) ? packet.from : undefined,
                     },
                     timestamp: new Date().toISOString(),
                     values,
@@ -720,7 +720,7 @@ module.exports = (app) => {
                       label: 'signalk-meshtastic',
                       src: (settings
                         && settings.communications
-                        && settings.communications.populate_delta_source) ? packet.from : undefined,
+                        && settings.communications.populate_delta_sources) ? packet.from : undefined,
                     },
                     timestamp: new Date().toISOString(),
                     values,
@@ -787,7 +787,7 @@ module.exports = (app) => {
                     label: 'signalk-meshtastic',
                     src: (settings
                       && settings.communications
-                      && settings.communications.populate_delta_source) ? position.from : undefined,
+                      && settings.communications.populate_delta_sources) ? position.from : undefined,
                   },
                   timestamp: new Date().toISOString(),
                   values,
