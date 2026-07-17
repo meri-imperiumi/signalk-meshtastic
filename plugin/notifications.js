@@ -72,7 +72,7 @@ function sendNotification(path, value, episodes, settings, device, app) {
     return false;
   }
 
-  if (!shouldWeSendNotification(path, value, episodes, settings, device)) {
+  if (!shouldWeSendNotification(path, value, episodes, settings)) {
     return Promise.resolve();
   }
 
