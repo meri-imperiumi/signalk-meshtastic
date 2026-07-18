@@ -1,5 +1,8 @@
 # Changelog
-## [Unreleased]
+## [1.5.0] - 2026-07-18
+### Fixed
+- Send notifications registry should now expire after some time
+
 ### Changed
 - All delta source IDs are now cast as strings.
 
