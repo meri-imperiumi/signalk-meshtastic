@@ -1,6 +1,7 @@
 const { vesselIcon, sendWaypoint } = require('../waypoint');
 
-const regex = /waypoint ([a-z0-9]+)( ([0-9]+)h)?/i;
+//const regex = /waypoint ([a-z0-9]+)( ([0-9]+)h)?/i;
+const regex = /waypoint (.+?)(?: ([0-9]+)h)?$/i;
 
 module.exports = {
   crewOnly: true,
@@ -34,14 +35,18 @@ module.exports = {
         }
         return false;
       });
+
     if (!waypointVesselCtx) {
       return device.sendText(`Unable to find vessel ${identifier}`, msg.from, true, false);
     }
+
     const waypointVessel = app.signalk.root.vessels[waypointVesselCtx];
+
     if (!waypointVessel.navigation.position.value
       || !waypointVessel.navigation.position.value.latitude) {
       return device.sendText(`Vessel ${identifier} has no known position`, msg.from, true, false);
     }
+
     return sendWaypoint(
       waypointVessel.mmsi,
       waypointVessel.navigation.position.value,
@@ -50,6 +55,7 @@ module.exports = {
       vesselIcon(waypointVessel),
       length,
       'broadcast',
+      device,
       create,
       Protobuf,
     );
