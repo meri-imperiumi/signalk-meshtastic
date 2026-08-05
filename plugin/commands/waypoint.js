@@ -1,6 +1,5 @@
 const { vesselIcon, sendWaypoint } = require('../waypoint');
 
-//const regex = /waypoint ([a-z0-9]+)( ([0-9]+)h)?/i;
 const regex = /waypoint (.+?)(?: ([0-9]+)h)?$/i;
 
 module.exports = {
