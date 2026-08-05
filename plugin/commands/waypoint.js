@@ -1,12 +1,11 @@
 const { vesselIcon, sendWaypoint } = require('../waypoint');
 
-const regex = /waypoint (.+?)(?: ([0-9]+)h)?$/i;
+const regex = /waypoint (.+?)(?: ([0-9]+)h)?\s*$/i;
 
 module.exports = {
   crewOnly: true,
   example: 'Waypoint <callsign or boat name>',
   accept: (msg) => {
-    // FIXME: Add support for vessel names with spaces
     const waypointTgt = msg.data.match(regex);
     if (waypointTgt) {
       return true;
@@ -15,23 +14,33 @@ module.exports = {
   },
   handle: (msg, settings, device, app, create, Protobuf) => {
     const waypointTgt = msg.data.match(regex);
-    const identifier = waypointTgt[1];
-    const length = waypointTgt[3] || 1;
+    const identifier = waypointTgt[1].trim().normalize('NFC');
+    const lIdentifier = identifier.toLowerCase();
+    const length = Number(waypointTgt[3] || 1);
+
     const waypointVesselCtx = Object.keys(app.signalk.root.vessels)
       .find((vesselCtx) => {
         const vessel = app.signalk.root.vessels[vesselCtx];
-        const lIdentifier = identifier.toLowerCase();
+
         if (vessel.mmsi === identifier) {
           return true;
         }
-        if (vessel.name && vessel.name.toLowerCase() === lIdentifier) {
+
+        if (
+          vessel.name
+          && vessel.name.trim().normalize('NFC').toLowerCase() === lIdentifier
+        ) {
           return true;
         }
-        if (vessel.communication
+
+        if (
+          vessel.communication
           && vessel.communication.callsignVhf
-          && vessel.communication.callsignVhf.toLowerCase() === lIdentifier) {
+          && vessel.communication.callsignVhf.toLowerCase() === lIdentifier
+        ) {
           return true;
         }
+
         return false;
       });
 
@@ -40,20 +49,28 @@ module.exports = {
     }
 
     const waypointVessel = app.signalk.root.vessels[waypointVesselCtx];
+    const position = waypointVessel.navigation?.position?.value;
 
-    if (!waypointVessel.navigation.position.value
-      || !waypointVessel.navigation.position.value.latitude) {
-      return device.sendText(`Vessel ${identifier} has no known position`, msg.from, true, false);
+    if (
+      position?.latitude == null
+      || position?.longitude == null
+    ) {
+      return device.sendText(
+        `Vessel ${identifier} has no known position`,
+        msg.from,
+        true,
+        false,
+      );
     }
 
     return sendWaypoint(
       waypointVessel.mmsi,
-      waypointVessel.navigation.position.value,
+      position,
       waypointVessel.name || waypointVessel.mmsi,
       `AIS vessel ${waypointVessel.mmsi}`,
       vesselIcon(waypointVessel),
       length,
-      'broadcast',
+      msg.from,
       device,
       create,
       Protobuf,
