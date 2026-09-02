@@ -7,9 +7,16 @@ function median(arr) {
   return s.length % 2 ? s[mid] : ((s[mid - 1] + s[mid]) / 2);
 }
 
+const DEFAULT_ANCHOR_RADIUS_PATH = 'navigation.anchor.distanceFromBow';
+
 class Telemetry {
-  constructor() {
+  constructor(anchorRadiusPath = DEFAULT_ANCHOR_RADIUS_PATH) {
     this.data = {};
+    this.anchorRadiusPath = anchorRadiusPath;
+  }
+
+  setAnchorRadiusPath(anchorRadiusPath) {
+    this.anchorRadiusPath = anchorRadiusPath || DEFAULT_ANCHOR_RADIUS_PATH;
   }
 
   toMeshtastic() {
@@ -44,9 +51,9 @@ class Telemetry {
     if (Number.isFinite(this.data['electrical.batteries.house.current'])) {
       values.current = this.data['electrical.batteries.house.current'] * 1000;
     }
-    if (Number.isFinite(this.data['navigation.anchor.distanceFromBow'])) {
+    if (Number.isFinite(this.data[this.anchorRadiusPath])) {
       // Using distance is a bit silly here as the unit is mm, but what can we do
-      values.distance = this.data['navigation.anchor.distanceFromBow'] * 1000;
+      values.distance = this.data[this.anchorRadiusPath] * 1000;
     } else if (Number.isFinite(this.data['environment.depth.belowSurface'])) {
       // If not anchored, report depth as distance. Still mm.
       values.distance = this.data['environment.depth.belowSurface'] * 1000;
