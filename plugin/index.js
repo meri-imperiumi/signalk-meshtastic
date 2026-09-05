@@ -4,7 +4,7 @@ const { join } = require('path');
 const Telemetry = require('./telemetry');
 const commands = require('./commands/index');
 const { sendMOB } = require('./waypoint');
-const { sendNotification } = require('./notifications');
+const { sendNotification, sweepNotifications } = require('./notifications');
 
 if (!global.crypto) {
   // Older Node.js versions (like the one bundled in Venus OS
@@ -223,6 +223,7 @@ module.exports = (app) => {
   const nodes = {};
   const telemetry = new Telemetry();
   let publishInterval;
+  let sweepInterval;
   plugin.id = 'signalk-meshtastic';
   plugin.name = 'Meshtastic';
   plugin.description = 'Connect Signal K with the Meshtastic LoRa mesh network';
@@ -300,6 +301,13 @@ module.exports = (app) => {
       )
         .catch((e) => app.error(`Failed to send telemetry: ${e.message}`));
     }, 60000 * 4);
+
+    // Send clearing messages for notifications that have
+    // stayed cleared for the hysteresis window
+    sweepInterval = setInterval(() => {
+      sweepNotifications(episodes, settings, device, app)
+        .catch((e) => app.error(`Failed to sweep notifications: ${e.message}`));
+    }, 60000);
 
     function setWatchdog() {
       // Clear previous watchdog
@@ -915,6 +923,9 @@ module.exports = (app) => {
   plugin.stop = () => {
     if (publishInterval) {
       clearInterval(publishInterval);
+    }
+    if (sweepInterval) {
+      clearInterval(sweepInterval);
     }
     if (watchdog) {
       clearTimeout(watchdog);
