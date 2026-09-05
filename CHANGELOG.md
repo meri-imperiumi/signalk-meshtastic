@@ -1,5 +1,7 @@
 # Changelog
-## Unreleased
+## [Unreleased]
+
+## [1.6.0] - 2026-09-05
 ### Added
 - Alerts that stay cleared now produce a plain text clearing message to crew, with the same hysteresis as the alert messages so rapidly flapping alerts (like bilge sensors) only produce one alert and one clearing message
 
