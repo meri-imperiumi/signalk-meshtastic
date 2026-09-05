@@ -216,6 +216,12 @@ module.exports = (app) => {
   let device;
   let watchdog;
   let watchdogTriggered = 0;
+  // Pending retry timers that must not outlive a stop()
+  let startupRetry;
+  let connectRetry;
+  // Bumped on every start() and stop() so that startups from
+  // a previous lifecycle can detect they've been superseded
+  let startupGeneration = 0;
   const unsubscribes = {
     signalk: [],
     meshtastic: [],
@@ -254,7 +260,22 @@ module.exports = (app) => {
       app.setPluginError(`Failed to load Meshtastic library: ${e.message}`);
     });
 
-  plugin.start = (settings, restart) => {
+  plugin.start = (startSettings, restart) => {
+    // Merge configuration with the schema defaults so that the
+    // plugin can also start with an empty configuration
+    const settings = {
+      ...startSettings,
+      device: {
+        transport: 'tcp',
+        address: 'meshtastic.local',
+        log_level: 6,
+        heartbeat_interval: 60000,
+        ...startSettings && startSettings.device,
+      },
+    };
+    startupGeneration += 1;
+    const generation = startupGeneration;
+    const isCurrentStartup = () => startupGeneration === generation;
     if (!toBinary) {
       if (app.setPluginStatus) {
         app.setPluginStatus('Waiting for Meshtastic library to load');
@@ -262,7 +283,7 @@ module.exports = (app) => {
       if (!app.getDataDirPath) {
         return;
       }
-      setTimeout(() => {
+      startupRetry = setTimeout(() => {
         plugin.start(settings, restart);
       }, 1);
       return;
@@ -321,7 +342,9 @@ module.exports = (app) => {
         watchdogTriggered += 1;
         app.debug(`Watchdog ${watchdogTriggered} triggered, no packets seen in ${minutes}min`);
         app.error(`Watchdog ${watchdogTriggered} triggered, no packets seen in ${minutes}min`);
-        restart(settings);
+        if (restart) {
+          restart(settings);
+        }
       }, 60000 * minutes);
     }
 
@@ -549,6 +572,12 @@ module.exports = (app) => {
         return TransportNode.create(settings.device.address);
       })
       .then((transport) => {
+        if (!isCurrentStartup()) {
+          // Plugin was stopped or restarted while we were connecting
+          transport.disconnect()
+            .catch((e) => app.debug(`Failed to discard transport: ${e.message}`));
+          return undefined;
+        }
         device = new MeshDevice(transport);
         unsubscribes.meshtastic.push(
           device.events.onDeviceStatus.subscribe((state) => {
@@ -556,7 +585,9 @@ module.exports = (app) => {
             if (state === 2) {
               // Disconnected
               app.debug('Received disconnect event, restarting');
-              restart(settings);
+              if (restart) {
+                restart(settings);
+              }
             }
           }),
           device.events.onMyNodeInfo.subscribe((myNodeInfo) => {
@@ -904,23 +935,32 @@ module.exports = (app) => {
         return device.configure();
       })
       .then(() => {
+        if (!isCurrentStartup() || !device) {
+          return;
+        }
         app.debug(`Connected and configured with Meshtastic node ${settings.device.address}`);
         app.setPluginStatus(`Connected to Meshtastic node ${settings.device.address}`);
-        if (device) {
-          device.setHeartbeatInterval(settings.device.heartbeat_interval || 60000);
-        }
+        device.setHeartbeatInterval(settings.device.heartbeat_interval || 60000);
       })
       .catch((e) => {
+        if (!isCurrentStartup()) {
+          // Plugin was stopped while we were connecting, no need to retry
+          return;
+        }
         // Couldn't find node, possibly due to a node restart/crash
         // Try connecting again after a while
         app.error(`Unable to connect to node ${settings.device.address}: ${e.code} ${e.message}. Retrying`);
-        setTimeout(() => {
+        connectRetry = setTimeout(() => {
           app.debug('Triggered restart due to failed initial connect/configure');
-          restart(settings);
+          if (restart) {
+            restart(settings);
+          }
         }, 30000);
       });
   };
   plugin.stop = () => {
+    // Invalidate startups that are still connecting
+    startupGeneration += 1;
     if (publishInterval) {
       clearInterval(publishInterval);
     }
@@ -929,6 +969,14 @@ module.exports = (app) => {
     }
     if (watchdog) {
       clearTimeout(watchdog);
+    }
+    if (startupRetry) {
+      clearTimeout(startupRetry);
+      startupRetry = undefined;
+    }
+    if (connectRetry) {
+      clearTimeout(connectRetry);
+      connectRetry = undefined;
     }
     unsubscribes.signalk.forEach((f) => f());
     unsubscribes.signalk = [];

@@ -3,6 +3,10 @@
 ### Added
 - Alerts that stay cleared now produce a plain text clearing message to crew, with the same hysteresis as the alert messages so rapidly flapping alerts (like bilge sensors) only produce one alert and one clearing message
 
+### Fixed
+- Starting with an empty configuration no longer crashes the plugin (configuration is now merged with the schema defaults)
+- Pending startup and connection retries are now cancelled when the plugin is stopped, so the plugin no longer resurrects itself after being disabled
+
 ## [1.5.0] - 2026-07-18
 ### Fixed
 - Send notifications registry should now expire after some time
