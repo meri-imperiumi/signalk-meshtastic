@@ -1,5 +1,7 @@
 # Changelog
 ## [Unreleased]
+
+## [1.6.1] - 2026-09-08
 ### Fixed
 - Waypoint command no longer crashes with "Unable to handle mesh packet" when requesting a waypoint for a vessel that has a position (the device argument was missing from the waypoint sending call)
 
