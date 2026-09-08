@@ -1,6 +1,6 @@
 const { vesselIcon, sendWaypoint } = require('../waypoint');
 
-const regex = /waypoint (.+?)(?: ([0-9]+)h)?\s*$/i;
+const regex = /waypoint (?<name>.+?)(?: (?<hours>[0-9]+)h)?\s*$/i;
 
 module.exports = {
   crewOnly: true,
@@ -14,9 +14,9 @@ module.exports = {
   },
   handle: (msg, settings, device, app, create, Protobuf) => {
     const waypointTgt = msg.data.match(regex);
-    const identifier = waypointTgt[1].trim().normalize('NFC');
+    const identifier = waypointTgt.groups.name.trim().normalize('NFC');
     const lIdentifier = identifier.toLowerCase();
-    const length = Number(waypointTgt[3] || 1);
+    const length = Number(waypointTgt.groups.hours || 1);
 
     const waypointVesselCtx = Object.keys(app.signalk.root.vessels)
       .find((vesselCtx) => {

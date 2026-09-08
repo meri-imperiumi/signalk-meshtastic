@@ -1,5 +1,11 @@
 # Changelog
 ## [Unreleased]
+### Fixed
+- Waypoint command no longer crashes with "Unable to handle mesh packet" when requesting a waypoint for a vessel that has a position (the device argument was missing from the waypoint sending call)
+
+### Changed
+- Waypoint command now understands vessel names containing spaces
+- Requested waypoints are sent to the requester instead of being broadcast
 
 ## [1.6.0] - 2026-09-05
 ### Added
