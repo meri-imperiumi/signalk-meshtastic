@@ -2,7 +2,9 @@ module.exports = {
   crewOnly: true,
   example: 'Turn <switch name> on',
   accept: (msg, settings) => {
-    const switching = msg.data.match(/turn ([a-z0-9]+) (on|off)/i);
+    // Switch names may contain dots to address nested switches,
+    // like Cerbo GX relays ("turn gx.gxInternalRelay1 on")
+    const switching = msg.data.match(/turn ([a-z0-9]+(?:\.[a-z0-9]+)*) (on|off)/i);
     if (settings.communications
       && settings.communications.digital_switching
       && switching) {
@@ -11,7 +13,7 @@ module.exports = {
     return false;
   },
   handle: (msg, settings, device, app) => {
-    const switching = msg.data.match(/turn ([a-z0-9]+) (on|off)/i);
+    const switching = msg.data.match(/turn ([a-z0-9]+(?:\.[a-z0-9]+)*) (on|off)/i);
     const light = switching[1];
     const value = switching[2] === 'on';
     return new Promise((resolve, reject) => {

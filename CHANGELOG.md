@@ -1,5 +1,7 @@
 # Changelog
 ## [Unreleased]
+### Added
+- Digital switching command now understands nested switch paths, enabling control of Cerbo GX internal relays ("turn gx.gxInternalRelay1 on")
 
 ## [1.6.1] - 2026-09-08
 ### Fixed
