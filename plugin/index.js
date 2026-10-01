@@ -1102,6 +1102,28 @@ module.exports = (app) => {
                 },
               ],
             },
+            status_paths: {
+              type: 'array',
+              title: 'Additional Signal K paths to include in the "Status" reply',
+              description: 'Each path is reported as "Label: value", for example "WAN: Cellular" for networking.wan.activeLabel labelled "WAN"',
+              default: [],
+              items: {
+                type: 'object',
+                required: ['path', 'label'],
+                properties: {
+                  path: {
+                    type: 'string',
+                    title: 'Signal K path',
+                    description: 'For example networking.wan.activeLabel',
+                  },
+                  label: {
+                    type: 'string',
+                    title: 'Label',
+                    description: 'Short label shown before the value, for example WAN',
+                  },
+                },
+              },
+            },
             digital_switching: {
               type: 'boolean',
               title: 'Allow crew members to change digital switch status by Meshtastic message ("turn decklight on")',

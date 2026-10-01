@@ -1,26 +1,15 @@
+const { nodeRole } = require('../settings');
 const fallback = require('./fallback');
 
 exports.ping = require('./ping');
+exports.status = require('./status');
 exports.switching = require('./switching');
 exports.waypoint = require('./waypoint');
 
 // Everything else exported from this module is a helper, not a text command
 const HELPERS = ['isFromCrew', 'available', 'dispatch'];
 
-exports.isFromCrew = (msg, settings) => {
-  const crew = settings.nodes
-    .filter((node) => {
-      if (node.role === 'crew') {
-        return true;
-      }
-      return false;
-    })
-    .map((node) => node.node);
-  if (crew.indexOf(msg.from) !== -1) {
-    return true;
-  }
-  return false;
-};
+exports.isFromCrew = (msg, settings) => nodeRole(settings, msg.from) === 'crew';
 
 // Names of the commands the sender of this message is allowed to use
 exports.available = (msg, settings) => {
