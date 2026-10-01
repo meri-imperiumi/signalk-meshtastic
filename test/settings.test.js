@@ -2,11 +2,68 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+  environmentMetricsInterval,
   anchorRadiusPath,
   nodeRole,
   sendAlerts,
   statusPaths,
 } = require('../plugin/settings');
+
+describe('environment metrics interval', () => {
+  it('defaults to off', () => {
+    assert.equal(environmentMetricsInterval({}), 0);
+    assert.equal(environmentMetricsInterval({ communications: {} }), 0);
+  });
+
+  it('handles a missing configuration', () => {
+    assert.equal(environmentMetricsInterval(undefined), 0);
+  });
+
+  it('uses the configured interval', () => {
+    assert.equal(environmentMetricsInterval({
+      communications: { environment_metrics_interval: 900 },
+    }), 900);
+  });
+
+  it('treats zero as disabled', () => {
+    assert.equal(environmentMetricsInterval({
+      communications: { environment_metrics_interval: 0 },
+    }), 0);
+  });
+
+  it('keeps sending for configurations that enabled the old boolean', () => {
+    assert.equal(environmentMetricsInterval({
+      communications: { send_environment_metrics: true },
+    }), 240);
+  });
+
+  it('keeps the old boolean turned off disabled', () => {
+    assert.equal(environmentMetricsInterval({
+      communications: { send_environment_metrics: false },
+    }), 0);
+  });
+
+  it('prefers an explicit interval over the old boolean', () => {
+    assert.equal(environmentMetricsInterval({
+      communications: {
+        send_environment_metrics: true,
+        environment_metrics_interval: 0,
+      },
+    }), 0);
+    assert.equal(environmentMetricsInterval({
+      communications: {
+        send_environment_metrics: false,
+        environment_metrics_interval: 600,
+      },
+    }), 600);
+  });
+
+  it('ignores a non-numeric interval', () => {
+    assert.equal(environmentMetricsInterval({
+      communications: { environment_metrics_interval: 'often' },
+    }), 0);
+  });
+});
 
 describe('anchor radius path', () => {
   it('defaults to the distance from bow', () => {

@@ -43,7 +43,7 @@ In production use on several boats.
   * Share Meshtastic waypoints for AIS targets (_"Waypoint DH8613"_)
   * Control digital switching (_"Turn decklight on"_). Opt-in.
   * Any other direct message gets a short reply explaining that the node is automated and which commands it understands, at most once per hour per node. Best effort: Meshtastic only delivers direct messages between nodes that have exchanged public keys
-* Share weather station data from Signal K (wind, temperature, etc) over Meshtastic. Opt-in.
+* Share weather station data from Signal K (wind, temperature, etc) over Meshtastic at a configurable interval. Opt-in.
 * Show position-sharing Meshtastic nodes as vessels in Freeboard etc. Opt-in.
   * Associate Meshtastic nodes with other (AIS) vessels based on the `Some node name DE <callsign>` pattern
 
