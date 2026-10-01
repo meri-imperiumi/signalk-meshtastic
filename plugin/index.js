@@ -640,32 +640,7 @@ module.exports = (app) => {
             setConnectionStatus();
           }),
           device.events.onMessagePacket.subscribe((message) => {
-            if (message.type !== 'direct') {
-              // Not DM
-              return;
-            }
-            const fromCrew = commands.isFromCrew(message, settings);
-            Object.keys(commands).forEach((cmd) => {
-              if (cmd === 'isFromCrew') {
-                return;
-              }
-              const command = commands[cmd];
-              if (command.crewOnly && !fromCrew) {
-                return;
-              }
-              if (!command.accept(message, settings)) {
-                return;
-              }
-              command.handle(message, settings, device, app, create, Protobuf)
-                .then(() => {
-                  app.debug(`Message "${message.data}" handled by command ${command}`);
-                })
-                .catch((err) => {
-                  app.debug(`Message "${message.data}" failed by command ${command}`);
-                  app.debug(err.message);
-                  app.error(err.message);
-                });
-            });
+            commands.dispatch(message, settings, device, app, create, Protobuf);
           }),
           device.events.onTelemetryPacket.subscribe((packet) => {
             if (!nodes[packet.from]) {
