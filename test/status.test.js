@@ -45,17 +45,23 @@ function historyApp(rows, to) {
   };
 }
 
-function handle(paths, settings = {}, timestamps = {}, history = {}, units = {}) {
-  let sent;
+// Every message the command sent, in order
+function handleMessages(paths, settings = {}, timestamps = {}, history = {}, units = {}) {
+  const sent = [];
   const device = {
     sendText: (text) => {
-      sent = text;
+      sent.push(text);
       return Promise.resolve();
     },
   };
   const app = Object.assign(mockApp(paths, timestamps, units), history);
   return status.handle({ data: 'Status', from: 1 }, settings, device, app)
     .then(() => sent);
+}
+
+// The whole reply, however many messages it was split across
+function handle(...args) {
+  return handleMessages(...args).then((sent) => sent.join('\n'));
 }
 
 describe('status command', () => {
@@ -347,5 +353,57 @@ describe('status command wind history', () => {
   ]))
     .then((sent) => {
       assert.equal(sent, 'Anchor: not set\nDepth: n/a\nWind: 12.2kn 245T\nNode: not configured, no alerts');
+    }));
+});
+
+describe('status command message splitting', () => {
+  const manyPaths = {};
+  const manyConfigured = [];
+  for (let i = 0; i < 8; i += 1) {
+    manyPaths[`sensors.unit${i}.reading`] = `value-number-${i}`;
+    manyConfigured.push({ path: `sensors.unit${i}.reading`, label: `Sensor ${i}` });
+  }
+
+  const bytes = (text) => Buffer.byteLength(text, 'utf8');
+
+  it('sends a reply that fits as a single message', () => handleMessages({})
+    .then((sent) => {
+      assert.equal(sent.length, 1);
+      assert.ok(bytes(sent[0]) <= 200, `${bytes(sent[0])} bytes`);
+    }));
+
+  it('splits a long reply between lines, never inside one', () => handleMessages(
+    manyPaths,
+    { communications: { status_paths: manyConfigured } },
+  )
+    .then((sent) => {
+      assert.ok(sent.length > 1, `expected a split, got ${sent.length} message(s)`);
+      sent.forEach((message) => {
+        assert.ok(bytes(message) <= 200, `${bytes(message)} bytes: ${message}`);
+        assert.ok(message.length, 'no empty messages');
+      });
+      // Each line survives whole, in order, split only between lines
+      const lines = sent.flatMap((message) => message.split('\n'));
+      assert.deepEqual(lines, [
+        'Anchor: not set',
+        'Depth: n/a',
+        'Wind: n/a',
+        ...manyConfigured.map((entry, i) => `Sensor ${i}: value-number-${i}`),
+        'Node: not configured, no alerts',
+      ]);
+    }));
+
+  it('truncates a single line that is too long on its own', () => handleMessages({
+    'sensors.verbose.reading': '€'.repeat(100),
+  }, {
+    communications: { status_paths: [{ path: 'sensors.verbose.reading', label: 'Long' }] },
+  })
+    .then((sent) => {
+      const long = sent.find((message) => message.startsWith('Long: '));
+      assert.ok(long, 'the long line was sent');
+      assert.ok(bytes(long) <= 200, `${bytes(long)} bytes`);
+      // Cut between characters, so it is still valid UTF-8
+      assert.ok(!long.includes('\ufffd'), 'no replacement characters');
+      assert.equal(Buffer.from(long, 'utf8').toString('utf8'), long);
     }));
 });

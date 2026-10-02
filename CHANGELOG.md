@@ -6,6 +6,7 @@
 - New "Status" command replying with anchor, depth, wind and house bank state of charge, including the trailing one and ten minute wind average and maximum when a history provider is available
 - The status reply confirms the asking node's configured role and whether it receives alerts, so crew can check their node after a node identity reset
 - Further Signal K paths can be included in the status reply with a short label, for example the active WAN connection as "WAN: Cellular". Paths the server describes as a ratio are reported as a percentage, and paths the boat does not measure are left out
+- Status replies too long for a single text message are split across several, always between lines
 
 ### Fixed
 - The plugin's own replies, which the Meshtastic library echoes back as received messages, are no longer run through command handling

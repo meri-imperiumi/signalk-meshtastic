@@ -183,6 +183,50 @@ function configuredStatus(app, settings) {
     .filter((line) => line);
 }
 
+// A text message has to fit the radio, which caps a packet payload at 233
+// bytes. Staying under 200 leaves room and matches what the mesh carries
+// comfortably. Measured in bytes rather than characters because that is what
+// the limit is really in, and labels are the user's to choose
+const MAX_MESSAGE_BYTES = 200;
+
+// Cut a line that is too long on its own to the limit, by code point so the
+// result never ends halfway through a character
+function fitLine(line) {
+  if (Buffer.byteLength(line, 'utf8') <= MAX_MESSAGE_BYTES) {
+    return line;
+  }
+  const chars = Array.from(line);
+  let fitted = '';
+  for (let i = 0; i < chars.length; i += 1) {
+    if (Buffer.byteLength(fitted + chars[i], 'utf8') > MAX_MESSAGE_BYTES) {
+      break;
+    }
+    fitted += chars[i];
+  }
+  return fitted;
+}
+
+// Pack the reply into as few messages as fit, splitting only between lines so
+// that every message stands on its own
+function messagesFor(lines) {
+  const messages = [];
+  lines.forEach((line) => {
+    const fitted = fitLine(line);
+    if (!messages.length) {
+      messages.push(fitted);
+      return;
+    }
+    const last = messages[messages.length - 1];
+    const joined = `${last}\n${fitted}`;
+    if (Buffer.byteLength(joined, 'utf8') <= MAX_MESSAGE_BYTES) {
+      messages[messages.length - 1] = joined;
+      return;
+    }
+    messages.push(fitted);
+  });
+  return messages;
+}
+
 function stats(rows) {
   if (!rows.length) {
     return undefined;
@@ -250,6 +294,10 @@ module.exports = {
       }
       status.push(...configuredStatus(app, settings));
       status.push(nodeStatus(msg, settings));
-      return device.sendText(status.join('\n'), msg.from, true, false);
+      // One message where it fits, otherwise several sent in order
+      return messagesFor(status).reduce(
+        (prev, text) => prev.then(() => device.sendText(text, msg.from, true, false)),
+        Promise.resolve(),
+      );
     }),
 };
