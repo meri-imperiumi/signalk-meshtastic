@@ -1,5 +1,7 @@
 # Changelog
 ## [Unreleased]
+
+## [1.7.0] - 2026-10-03
 ### Added
 - The anchor distance reported in environment metrics can now be read from `navigation.anchor.currentRadius` instead of the default `navigation.anchor.distanceFromBow`
 - Direct messages matching no command now get a short reply explaining that the node is automated and listing the commands the sender may use, rate limited to once per hour per node
