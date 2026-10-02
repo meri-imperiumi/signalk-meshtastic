@@ -2,6 +2,11 @@
 ## [Unreleased]
 ### Added
 - The anchor distance reported in environment metrics can now be read from `navigation.anchor.currentRadius` instead of the default `navigation.anchor.distanceFromBow`
+- Direct messages matching no command now get a short reply explaining that the node is automated and listing the commands the sender may use, rate limited to once per hour per node
+
+### Fixed
+- The plugin's own replies, which the Meshtastic library echoes back as received messages, are no longer run through command handling
+- Debug logging for handled messages now names the command instead of serialising the handler object
 
 ## [1.6.2] - 2026-09-18
 ### Added
