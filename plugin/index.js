@@ -5,6 +5,7 @@ const Telemetry = require('./telemetry');
 const commands = require('./commands/index');
 const { sendMOB } = require('./waypoint');
 const { sendNotification, sweepNotifications } = require('./notifications');
+const { DEFAULT_STATUS_PATHS } = require('./settings');
 
 if (!global.crypto) {
   // Older Node.js versions (like the one bundled in Venus OS
@@ -1105,8 +1106,8 @@ module.exports = (app) => {
             status_paths: {
               type: 'array',
               title: 'Additional Signal K paths to include in the "Status" reply',
-              description: 'Each path is reported as "Label: value", for example "WAN: Cellular" for networking.wan.activeLabel labelled "WAN"',
-              default: [],
+              description: 'Each path is reported as "Label: value", for example "WAN: Cellular" for networking.wan.activeLabel labelled "WAN". Paths the server describes as a ratio are reported as a percentage. Remove the entries to leave them out of the reply',
+              default: DEFAULT_STATUS_PATHS,
               items: {
                 type: 'object',
                 required: ['path', 'label'],

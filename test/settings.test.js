@@ -52,10 +52,15 @@ describe('send alerts', () => {
 });
 
 describe('status paths', () => {
-  it('is empty by default', () => {
-    assert.deepEqual(statusPaths({}), []);
-    assert.deepEqual(statusPaths({ communications: {} }), []);
-    assert.deepEqual(statusPaths({ communications: { status_paths: 'nope' } }), []);
+  it('reports the house bank state of charge by default', () => {
+    const soc = [{ path: 'electrical.batteries.house.capacity.stateOfCharge', label: 'SoC' }];
+    assert.deepEqual(statusPaths({}), soc);
+    assert.deepEqual(statusPaths({ communications: {} }), soc);
+    assert.deepEqual(statusPaths({ communications: { status_paths: 'nope' } }), soc);
+  });
+
+  it('stays empty once the user has removed the defaults', () => {
+    assert.deepEqual(statusPaths({ communications: { status_paths: [] } }), []);
   });
 
   it('returns the configured paths and labels', () => {
