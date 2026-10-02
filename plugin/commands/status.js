@@ -1,5 +1,3 @@
-const { Temporal } = require('@js-temporal/polyfill');
-
 const {
   anchorRadiusPath,
   nodeRole,
@@ -15,7 +13,33 @@ const MAX_AGE_MS = 60000;
 // Values that are set once and stay valid until changed
 const NO_MAX_AGE = 0;
 const WIND_PATH = 'environment.wind.speedTrue';
-const HISTORY_WINDOW = Temporal.Duration.from({ minutes: 10 });
+const MS_PER_UNIT = {
+  milliseconds: 1,
+  seconds: 1000,
+  minutes: 60000,
+  hours: 3600000,
+};
+
+// The history API wants the window as a Temporal.Duration, which Node does not
+// have natively yet. Providers only ever ask a duration to convert itself, and
+// accept either call signature, so implementing total() is enough and saves
+// pulling in a polyfill. Passing the plain number the API also documents is not
+// an option: it is specified as seconds, but the providers in the wild read it
+// as milliseconds
+function duration(milliseconds) {
+  return {
+    total: (unit) => {
+      const name = typeof unit === 'string' ? unit : (unit || {}).unit;
+      const perUnit = MS_PER_UNIT[name];
+      if (!perUnit) {
+        throw new RangeError(`Unsupported duration unit: ${name}`);
+      }
+      return milliseconds / perUnit;
+    },
+  };
+}
+
+const HISTORY_WINDOW = duration(10 * 60 * 1000);
 // History buckets are aligned to the clock rather than to the query, so the
 // bucket a window ends in is only partly filled. Asking for one second buckets
 // sidesteps that: with wind arriving about once a second we get the samples
@@ -106,11 +130,16 @@ function nodeStatus(msg, settings) {
   return `Node: crew, alerts ${sendAlerts(settings) ? 'on' : 'off'}`;
 }
 
-function formatValue(value) {
+function formatValue(value, units) {
   if (value === undefined || value === null || value === '') {
     return 'n/a';
   }
   if (typeof value === 'number') {
+    if (units === 'ratio') {
+      // Signal K keeps ratios as 0..1, but a state of charge reads better as a
+      // percentage, and the reply has no room to spell the unit out
+      return `${Math.round(value * 100)}%`;
+    }
     return Number.isInteger(value) ? String(value) : value.toFixed(1);
   }
   if (typeof value === 'object') {
@@ -119,11 +148,31 @@ function formatValue(value) {
   return String(value);
 }
 
+// Unit the server publishes for a path, when it publishes one at all
+function pathUnits(app, path) {
+  const data = app.getSelfPath(path);
+  if (!data || typeof data !== 'object' || !data.meta) {
+    return undefined;
+  }
+  return data.meta.units;
+}
+
 // Configured paths are typically state rather than sensor readings, like the
 // active WAN connection, so they are reported regardless of age
+//
+// Paths with no value at all are left out rather than reported as unavailable:
+// the defaults are not something the user asked for, and on a boat that does
+// not measure them a line saying nothing is not worth the airtime
 function configuredStatus(app, settings) {
   return statusPaths(settings)
-    .map(({ path, label }) => `${label}: ${formatValue(selfValue(app, path, NO_MAX_AGE))}`);
+    .map(({ path, label }) => {
+      const value = selfValue(app, path, NO_MAX_AGE);
+      if (value === undefined || value === null || value === '') {
+        return undefined;
+      }
+      return `${label}: ${formatValue(value, pathUnits(app, path))}`;
+    })
+    .filter((line) => line);
 }
 
 function stats(rows) {

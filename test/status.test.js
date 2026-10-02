@@ -7,16 +7,20 @@ function ago(seconds) {
   return new Date(Date.now() - (seconds * 1000)).toISOString();
 }
 
-function mockApp(paths, timestamps = {}) {
+function mockApp(paths, timestamps = {}, units = {}) {
   return {
     getSelfPath: (path) => {
       if (!(path in paths)) {
         return undefined;
       }
-      return {
+      const node = {
         value: paths[path],
         timestamp: timestamps[path] || new Date().toISOString(),
       };
+      if (units[path]) {
+        node.meta = { units: units[path] };
+      }
+      return node;
     },
   };
 }
@@ -27,7 +31,9 @@ function historyApp(rows, to) {
     getHistoryApi: () => Promise.resolve({
       getValues: (query) => {
         assert.equal(query.context, 'vessels.urn:mrn:imo:mmsi:218028390');
+        // Providers read the window either way round, so both have to work
         assert.equal(query.duration.total('minutes'), 10);
+        assert.equal(query.duration.total({ unit: 'milliseconds' }), 600000);
         assert.equal(query.resolution, 1);
         assert.deepEqual(query.pathSpecs.map((spec) => spec.aggregate), ['max', 'average']);
         return Promise.resolve({
@@ -39,7 +45,7 @@ function historyApp(rows, to) {
   };
 }
 
-function handle(paths, settings = {}, timestamps = {}, history = {}) {
+function handle(paths, settings = {}, timestamps = {}, history = {}, units = {}) {
   let sent;
   const device = {
     sendText: (text) => {
@@ -47,7 +53,7 @@ function handle(paths, settings = {}, timestamps = {}, history = {}) {
       return Promise.resolve();
     },
   };
-  const app = Object.assign(mockApp(paths, timestamps), history);
+  const app = Object.assign(mockApp(paths, timestamps, units), history);
   return status.handle({ data: 'Status', from: 1 }, settings, device, app)
     .then(() => sent);
 }
@@ -151,11 +157,12 @@ describe('status command configured paths', () => {
       assert.ok(sent.includes('WAN: Cellular\nOnline: online'), sent);
     }));
 
-  it('reports missing configured paths as unavailable', () => handle({
+  it('leaves out configured paths the boat does not measure', () => handle({
     'networking.wan.activeLabel': 'Cellular',
   }, settings)
     .then((sent) => {
-      assert.ok(sent.includes('WAN: Cellular\nOnline: n/a'), sent);
+      assert.ok(sent.includes('WAN: Cellular\nNode:'), sent);
+      assert.ok(!sent.includes('Online'), sent);
     }));
 
   it('formats numbers, booleans and objects', () => handle({
@@ -180,6 +187,45 @@ describe('status command configured paths', () => {
         'Anchor light: true',
         'Pos: {"latitude":60.1,"longitude":24.9}',
       ].join('\n')), sent);
+    }));
+
+  it('reports a path the server calls a ratio as a percentage', () => handle({
+    'electrical.batteries.house.capacity.stateOfCharge': 0.8734,
+  }, {
+    communications: {
+      status_paths: [
+        { path: 'electrical.batteries.house.capacity.stateOfCharge', label: 'SoC' },
+      ],
+    },
+  }, {}, {}, {
+    'electrical.batteries.house.capacity.stateOfCharge': 'ratio',
+  })
+    .then((sent) => {
+      assert.ok(sent.includes('SoC: 87%'), sent);
+    }));
+});
+
+describe('status command default paths', () => {
+  it('reports the house bank state of charge without any configuration', () => handle({
+    'electrical.batteries.house.capacity.stateOfCharge': 0.8734,
+  }, {}, {}, {}, {
+    'electrical.batteries.house.capacity.stateOfCharge': 'ratio',
+  })
+    .then((sent) => {
+      assert.ok(sent.includes('SoC: 87%'), sent);
+    }));
+
+  it('stays quiet on a boat with no state of charge source', () => handle({})
+    .then((sent) => {
+      assert.ok(!sent.includes('SoC'), sent);
+      assert.equal(sent, 'Anchor: not set\nDepth: n/a\nWind: n/a\nNode: not configured, no alerts');
+    }));
+
+  it('leaves the defaults out once the user has removed them', () => handle({
+    'electrical.batteries.house.capacity.stateOfCharge': 0.8734,
+  }, { communications: { status_paths: [] } })
+    .then((sent) => {
+      assert.ok(!sent.includes('SoC'), sent);
     }));
 });
 
