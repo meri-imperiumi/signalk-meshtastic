@@ -1,6 +1,9 @@
 // Resolving configuration values needs a home of its own now that several of
 // them are read from more than one place
 const DEFAULT_ANCHOR_RADIUS_PATH = 'navigation.anchor.distanceFromBow';
+// How often environment metrics go out, in seconds, for configurations that
+// enabled them through the boolean this setting replaced
+const DEFAULT_METRICS_INTERVAL = 240;
 // State of charge of the house bank, the same bank the environment metrics
 // report voltage and current for. Reported in the status reply unless the user
 // takes it out of the configured paths
@@ -10,6 +13,21 @@ const DEFAULT_STATUS_PATHS = [
 
 function communications(settings) {
   return (settings && settings.communications) || {};
+}
+
+// Seconds between environment metric broadcasts, or 0 to send none. Defaults
+// to off, as the boolean this setting replaced did
+function environmentMetricsInterval(settings) {
+  const options = communications(settings);
+  if (Number.isFinite(options.environment_metrics_interval)) {
+    return options.environment_metrics_interval;
+  }
+  if (options.send_environment_metrics === true) {
+    // Migrating a configuration that enabled the boolean this setting
+    // replaced, which sent metrics every four minutes
+    return DEFAULT_METRICS_INTERVAL;
+  }
+  return 0;
 }
 
 // Signal K path holding the distance to the anchor
@@ -50,6 +68,7 @@ function statusPaths(settings) {
 }
 
 module.exports = {
+  environmentMetricsInterval,
   anchorRadiusPath,
   nodeRole,
   sendAlerts,

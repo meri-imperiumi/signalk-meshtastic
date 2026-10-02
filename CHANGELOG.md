@@ -13,6 +13,9 @@
 - Debug logging for handled messages now names the command instead of serialising the handler object
 - Crew lookup no longer throws for configurations with no nodes
 
+### Changed
+- Environment metric sending is now configured with an interval in seconds instead of a boolean, defaulting to off as before. Zero disables sending, and configurations that had the boolean enabled keep sending every four minutes
+
 ## [1.6.2] - 2026-09-18
 ### Added
 - Digital switching command now understands nested switch paths, enabling control of Cerbo GX internal relays ("turn gx.gxInternalRelay1 on")

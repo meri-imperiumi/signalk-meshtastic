@@ -5,7 +5,11 @@ const Telemetry = require('./telemetry');
 const commands = require('./commands/index');
 const { sendMOB } = require('./waypoint');
 const { sendNotification, sweepNotifications } = require('./notifications');
-const { anchorRadiusPath, DEFAULT_STATUS_PATHS } = require('./settings');
+const {
+  environmentMetricsInterval,
+  anchorRadiusPath,
+  DEFAULT_STATUS_PATHS,
+} = require('./settings');
 
 if (!global.crypto) {
   // Older Node.js versions (like the one bundled in Venus OS
@@ -294,37 +298,36 @@ module.exports = (app) => {
 
     telemetry.setAnchorRadiusPath(anchorRadiusPath(settings));
 
-    publishInterval = setInterval(() => {
-      if (!device) {
-        // Not connected to Meshtastic yet
-        return;
-      }
-      if (!settings.communications || !settings.communications.send_environment_metrics) {
-        // Metrics sending disabled
-        return;
-      }
-      const values = telemetry.toMeshtastic();
-      if (Object.keys(values).length === 0) {
-        // No telemetry to send
-        return;
-      }
-      const telemetryMessage = create(Protobuf.Telemetry.TelemetrySchema, {
-        time: Math.floor(new Date().getTime() / 1000),
-        variant: {
-          case: 'environmentMetrics',
-          value: create(Protobuf.Telemetry.EnvironmentMetricsSchema, values),
-        },
-      });
-      device.sendPacket(
-        toBinary(Protobuf.Telemetry.TelemetrySchema, telemetryMessage),
-        Protobuf.Portnums.PortNum.TELEMETRY_APP,
-        'broadcast',
-        0,
-        true,
-        false,
-      )
-        .catch((e) => app.error(`Failed to send telemetry: ${e.message}`));
-    }, 60000 * 4);
+    const metricsInterval = environmentMetricsInterval(settings);
+    if (metricsInterval > 0) {
+      publishInterval = setInterval(() => {
+        if (!device) {
+          // Not connected to Meshtastic yet
+          return;
+        }
+        const values = telemetry.toMeshtastic();
+        if (Object.keys(values).length === 0) {
+          // No telemetry to send
+          return;
+        }
+        const telemetryMessage = create(Protobuf.Telemetry.TelemetrySchema, {
+          time: Math.floor(new Date().getTime() / 1000),
+          variant: {
+            case: 'environmentMetrics',
+            value: create(Protobuf.Telemetry.EnvironmentMetricsSchema, values),
+          },
+        });
+        device.sendPacket(
+          toBinary(Protobuf.Telemetry.TelemetrySchema, telemetryMessage),
+          Protobuf.Portnums.PortNum.TELEMETRY_APP,
+          'broadcast',
+          0,
+          true,
+          false,
+        )
+          .catch((e) => app.error(`Failed to send telemetry: ${e.message}`));
+      }, metricsInterval * 1000);
+    }
 
     // Send clearing messages for notifications that have
     // stayed cleared for the hysteresis window
@@ -941,6 +944,7 @@ module.exports = (app) => {
     startupGeneration += 1;
     if (publishInterval) {
       clearInterval(publishInterval);
+      publishInterval = undefined;
     }
     if (sweepInterval) {
       clearInterval(sweepInterval);
@@ -1080,10 +1084,11 @@ module.exports = (app) => {
               title: 'Send alerts to crew via Meshtastic',
               default: true,
             },
-            send_environment_metrics: {
-              type: 'boolean',
-              title: 'Send environment metrics (wind, temperature, etc) to Meshtastic',
-              default: false,
+            environment_metrics_interval: {
+              type: 'integer',
+              title: 'How often to send environment metrics (wind, temperature, etc) to Meshtastic, in seconds. Set to 0 to disable',
+              default: 0,
+              minimum: 0,
             },
             anchor_radius_path: {
               type: 'string',
