@@ -63,7 +63,7 @@ describe('command dispatch', () => {
     return dispatch(device, dm(STRANGER, 'help'))
       .then(() => {
         assert.equal(device.sent.length, 1);
-        assert.equal(device.sent[0].text, 'Commands: Ping, Help');
+        assert.equal(device.sent[0].text, 'Commands: Ping, Status, Help');
       });
   });
 
@@ -72,7 +72,7 @@ describe('command dispatch', () => {
     return dispatch(device, dm(CREW, 'help'))
       .then(() => {
         assert.equal(device.sent.length, 1);
-        assert.equal(device.sent[0].text, 'Commands: Ping, Turn <switch name> on, Waypoint <callsign or boat name>, Help');
+        assert.equal(device.sent[0].text, 'Commands: Ping, Status, Turn <switch name> on, Waypoint <callsign or boat name>, Help');
       });
   });
 
@@ -82,7 +82,7 @@ describe('command dispatch', () => {
       .then(() => {
         assert.equal(device.sent.length, 1);
         assert.equal(device.sent[0].to, STRANGER);
-        assert.equal(device.sent[0].text, 'Automated boat node, nobody reads this. Commands: Ping, Help');
+        assert.equal(device.sent[0].text, 'Automated boat node, nobody reads this. Commands: Ping, Status, Help');
       });
   });
 

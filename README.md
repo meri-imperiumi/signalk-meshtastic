@@ -36,6 +36,10 @@ In production use on several boats.
 * Send Signal K alerts as Meshtastic text messages to crew
   * MOB alerts (for example from [signalk-mob-notifier](https://github.com/meri-imperiumi/signalk-mob-notifier)) also send a waypoint to the MOB beacon
 * Control Signal K with Meshtastic direct messages:
+  * Query anchor, depth, wind and house bank state of charge status (_"Status"_). The reply also confirms whether your node is configured as a crew node that receives alerts
+    * Further Signal K paths can be added to the reply with a short label, for example `networking.wan.activeLabel` as _"WAN: Cellular"_. Paths the server describes as a ratio are reported as a percentage
+    * State of charge is just the first such path, so it can be relabelled, pointed at another battery bank, or removed in the plugin settings. Paths the boat does not measure are left out of the reply
+    * Long replies are split into several messages to stay inside what the radio carries, always between lines so each message reads on its own
   * Share Meshtastic waypoints for AIS targets (_"Waypoint DH8613"_)
   * Control digital switching (_"Turn decklight on"_). Opt-in.
   * Any other direct message gets a short reply explaining that the node is automated and which commands it understands, at most once per hour per node. Best effort: Meshtastic only delivers direct messages between nodes that have exchanged public keys
