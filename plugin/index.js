@@ -5,7 +5,7 @@ const Telemetry = require('./telemetry');
 const commands = require('./commands/index');
 const { sendMOB } = require('./waypoint');
 const { sendNotification, sweepNotifications } = require('./notifications');
-const { DEFAULT_STATUS_PATHS } = require('./settings');
+const { anchorRadiusPath, DEFAULT_STATUS_PATHS } = require('./settings');
 
 if (!global.crypto) {
   // Older Node.js versions (like the one bundled in Venus OS
@@ -292,10 +292,7 @@ module.exports = (app) => {
 
     const nodeDbFile = join(app.getDataDirPath(), 'node-db.json');
 
-    const anchorRadiusPath = (settings.communications
-      && settings.communications.anchor_radius_path)
-      || 'navigation.anchor.distanceFromBow';
-    telemetry.setAnchorRadiusPath(anchorRadiusPath);
+    telemetry.setAnchorRadiusPath(anchorRadiusPath(settings));
 
     publishInterval = setInterval(() => {
       if (!device) {
@@ -854,7 +851,7 @@ module.exports = (app) => {
                 period: 1000,
               },
               {
-                path: anchorRadiusPath,
+                path: anchorRadiusPath(settings),
                 period: 1000,
               },
               {
