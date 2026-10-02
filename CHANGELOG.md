@@ -1,5 +1,7 @@
 # Changelog
 ## [Unreleased]
+### Added
+- The anchor distance reported in environment metrics can now be read from `navigation.anchor.currentRadius` instead of the default `navigation.anchor.distanceFromBow`
 
 ## [1.6.2] - 2026-09-18
 ### Added

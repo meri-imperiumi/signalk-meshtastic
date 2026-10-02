@@ -88,7 +88,7 @@ Metrics used:
 * Wind speed (median of last ten minutes from `environment.wind.speedOverGround`)
 * Battery voltage (from `electrical.batteries.house.voltage`)
 * Battery current (from `electrical.batteries.house.current`)
-* If anchored, distance to anchor (from `navigation.anchor.distanceFromBow`)
+* If anchored, distance to anchor (from `navigation.anchor.distanceFromBow`, or `navigation.anchor.currentRadius` if configured in plugin settings)
 * If not anchored, distance is water depth (from `environment.depth.belowSurface`)
 
 ## Changes
