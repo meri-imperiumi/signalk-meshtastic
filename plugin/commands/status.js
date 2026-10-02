@@ -13,6 +13,7 @@ const MAX_AGE_MS = 60000;
 // Values that are set once and stay valid until changed
 const NO_MAX_AGE = 0;
 const WIND_PATH = 'environment.wind.speedTrue';
+const HISTORY_WINDOW_MINUTES = 10;
 const MS_PER_UNIT = {
   milliseconds: 1,
   seconds: 1000,
@@ -20,13 +21,16 @@ const MS_PER_UNIT = {
   hours: 3600000,
 };
 
-// The history API wants the window as a Temporal.Duration, which Node does not
-// have natively yet. Providers only ever ask a duration to convert itself, and
-// accept either call signature, so implementing total() is enough and saves
-// pulling in a polyfill. Passing the plain number the API also documents is not
-// an option: it is specified as seconds, but the providers in the wild read it
-// as milliseconds
-function duration(milliseconds) {
+// Stands in for the Temporal.Duration the history API wants on the Node
+// versions that have no Temporal of their own. Converting itself is the only
+// thing a provider ever asks a duration to do, and both call signatures are
+// covered because the published providers use one each.
+//
+// Passing the plain number the API also documents is not an option. The server
+// parses every duration into a Temporal.Duration before a provider sees it, so
+// no provider receives a number by any documented route, and the two that are
+// published read one as milliseconds where the type says seconds.
+function durationShim(milliseconds) {
   return {
     total: (unit) => {
       const name = typeof unit === 'string' ? unit : (unit || {}).unit;
@@ -39,7 +43,11 @@ function duration(milliseconds) {
   };
 }
 
-const HISTORY_WINDOW = duration(10 * 60 * 1000);
+// Temporal is a global from Node 26 on, and the real class is preferable to a
+// stand-in wherever it exists
+const HISTORY_WINDOW = global.Temporal
+  ? global.Temporal.Duration.from({ minutes: HISTORY_WINDOW_MINUTES })
+  : durationShim(HISTORY_WINDOW_MINUTES * 60 * 1000);
 // History buckets are aligned to the clock rather than to the query, so the
 // bucket a window ends in is only partly filled. Asking for one second buckets
 // sidesteps that: with wind arriving about once a second we get the samples
