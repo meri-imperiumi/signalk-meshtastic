@@ -1,5 +1,8 @@
 # Changelog
 ## [Unreleased]
+### Added
+- New crew text command "Log <text>" appending a manual entry to the logbook through the `logentries` resource API, so crew can keep the logbook updated over the mesh. A hashtag in the text like `#maintenance` sets the entry category and is removed from the entry text. Entries are authored to the name configured for the sending crew node, falling back to the sender device shortname. The reply confirms whether the entry was written
+- Related Meshtastic node configuration entries can now carry the name of the crew member carrying the node, used as the author of logbook entries sent from it
 
 ## [1.7.0] - 2026-10-03
 ### Added

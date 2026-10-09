@@ -42,6 +42,7 @@ In production use on several boats.
     * Long replies are split into several messages to stay inside what the radio carries, always between lines so each message reads on its own
   * Share Meshtastic waypoints for AIS targets (_"Waypoint DH8613"_)
   * Control digital switching (_"Turn decklight on"_). Opt-in.
+  * Keep the boat logbook updated (_"Log Changed the engine oil #maintenance"_), entries stored through the [signalk-logbook](https://github.com/meri-imperiumi/signalk-logbook) `logentries` resource API. A hashtag in the text sets the entry category and is removed from the entry text. Entries are authored to the name configured for the sending crew node, falling back to the sender device shortname. Requires the logbook plugin to be installed
   * Any other direct message gets a short reply explaining that the node is automated and which commands it understands, at most once per hour per node. Best effort: Meshtastic only delivers direct messages between nodes that have exchanged public keys
 * Share weather station data from Signal K (wind, temperature, etc) over Meshtastic at a configurable interval. Opt-in.
 * Show position-sharing Meshtastic nodes as vessels in Freeboard etc. Opt-in.

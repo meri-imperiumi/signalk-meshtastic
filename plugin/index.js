@@ -641,7 +641,7 @@ module.exports = (app) => {
             setConnectionStatus();
           }),
           device.events.onMessagePacket.subscribe((message) => {
-            commands.dispatch(message, settings, device, app, create, Protobuf);
+            commands.dispatch(message, settings, device, app, create, Protobuf, nodes);
           }),
           device.events.onTelemetryPacket.subscribe((packet) => {
             if (!nodes[packet.from]) {
@@ -1066,6 +1066,11 @@ module.exports = (app) => {
                     title: 'Onboard equipment',
                   },
                 ],
+              },
+              name: {
+                type: 'string',
+                title: 'Name',
+                description: 'Name of the crew member carrying this node, used as the author of logbook entries sent from it',
               },
             },
           },

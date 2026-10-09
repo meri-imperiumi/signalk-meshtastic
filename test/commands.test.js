@@ -72,7 +72,7 @@ describe('command dispatch', () => {
     return dispatch(device, dm(CREW, 'help'))
       .then(() => {
         assert.equal(device.sent.length, 1);
-        assert.equal(device.sent[0].text, 'Commands: Ping, Status, Turn <switch name> on, Waypoint <callsign or boat name>, Help');
+        assert.equal(device.sent[0].text, 'Commands: Ping, Status, Turn <switch name> on, Waypoint <callsign or boat name>, Log <text>, Help');
       });
   });
 
@@ -90,8 +90,14 @@ describe('command dispatch', () => {
     const device = mockDevice();
     return dispatch(device, dm(STRANGER, 'Waypoint DH8613'))
       .then(() => {
-        assert.equal(device.sent.length, 1);
-        assert.match(device.sent[0].text, /^Automated boat node/);
+        fallback.reset();
+        return dispatch(device, dm(STRANGER, 'log Changed the oil'));
+      })
+      .then(() => {
+        assert.equal(device.sent.length, 2);
+        device.sent.forEach((reply) => {
+          assert.match(reply.text, /^Automated boat node/);
+        });
       });
   });
 

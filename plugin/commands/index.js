@@ -5,6 +5,7 @@ exports.ping = require('./ping');
 exports.status = require('./status');
 exports.switching = require('./switching');
 exports.waypoint = require('./waypoint');
+exports.log = require('./log');
 
 // Everything else exported from this module is a helper, not a text command
 const HELPERS = ['isFromCrew', 'available', 'dispatch'];
@@ -31,7 +32,10 @@ exports.help = {
 
 // Route a received text message to the commands accepting it. Messages that
 // no command accepts get the fallback reply explaining what this node is
-exports.dispatch = (msg, settings, device, app, create, Protobuf) => {
+//
+// The nodeDb map of known Meshtastic nodes is passed through to command
+// handlers that need to know more about the sender than their configuration
+exports.dispatch = (msg, settings, device, app, create, Protobuf, nodeDb) => {
   if (msg.type !== 'direct') {
     // Not DM
     return Promise.resolve();
@@ -55,7 +59,7 @@ exports.dispatch = (msg, settings, device, app, create, Protobuf) => {
       });
   }
   return Promise.all(matching.map((name) => exports[name]
-    .handle(msg, settings, device, app, create, Protobuf)
+    .handle(msg, settings, device, app, create, Protobuf, nodeDb)
     .then(() => {
       app.debug(`Message "${msg.data}" handled by command ${name}`);
     })
