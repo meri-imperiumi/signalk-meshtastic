@@ -79,6 +79,28 @@ LoRa is line-of-sight communications quite similarly to VHF. Communications rang
 
 **OpenCPN users:** OpenCPN [has a bug](https://github.com/OpenCPN/OpenCPN/issues/5224#issuecomment-4929856487) that crashes OpenCPN with the long source identifiers sent by this plugin. Disable the "Populate the Meshtastic node that was the source" option in plugin settings to make OpenCPN not crash.
 
+## Migrating to Meshtastic 2.8
+
+Meshtastic 2.8 changes how node numbers work: a node's number is now derived from its public key, so flashing a node with 2.8 changes its number. Other nodes see it as a new node, and the old number lingers in their node lists until it ages out. [Back up your node configuration](https://meshtastic.org/blog/lets-talk-about-2-8/) before upgrading.
+
+This plugin recognizes re-keyed nodes automatically. When a known public key re-appears under a new number, the node's names, vessel association and last-seen time migrate to the new number, the old numbers are recorded in the node's id history, and the old entry is pruned from the node database. A re-keyed node keeps its Signal K vessel identity and history instead of appearing as a brand new vessel.
+
+**Configured node roles are not remapped automatically.** Crew, dinghy and onboard equipment roles authorize commands (including digital switching of real-world circuits), and the node database on boat nodes before 2.8 carries no authenticity: anyone on a shared channel can broadcast a NodeInfo pairing a crew node's public key with a number they control. Migrating a role on that evidence would let one forged packet hand out a permanent crew role. Instead the plugin raises a Signal K notification (_"Meshtastic node ... re-keyed ... Reassign its crew role in the plugin configuration"_) listing every role still pointing at the old number:
+
+* Upgrade your nodes to 2.8 or newer
+* Wait for the plugin to see them (minutes after the boat node reconnects)
+* Open the notification, and reassign the affected node roles in the plugin configuration to the new numbers
+* The notification clears once the configuration no longer references the old numbers
+
+Crew nodes should verify their configuration after upgrading: send _"Status"_ and check that the reply confirms the crew role. Until the role is reassigned, commands sent from the re-keyed node are treated as coming from an unconfigured node.
+
+Other 2.8 changes to be aware of:
+
+* **Position and telemetry broadcasts are off by default.** After upgrading crew and dinghy tracker nodes, turn position and telemetry broadcasting back on, or the plugin stops seeing them move
+* **Precise position is not sent on public channels.** Exact locations of your nodes are only shared within private channels. The plugin accounts for this: positions arriving truncated are published with their maximum error as `communication.meshtastic.positionAccuracy` (in meters), and channels configured with zero position precision send no coordinates at all — the plugin ignores those instead of recording a position in the middle of the ocean
+* **Long names are limited to 24 bytes.** If you associate nodes with AIS vessels through the `<Vessel name> DE <Callsign>` pattern, keep the name short enough that the callsign survives the limit
+* Packet signing is on by default under the _Compatible_ policy, which still accepts unsigned packets from older nodes. Commands are direct messages and always encrypted with the recipient's public key, so they remain functional across the upgrade
+
 ## Telemetry sent to Meshtastic
 
 If enabled, your "boat node" will transmit the following telemetry to Meshtastic. This enables tracking various important metrics about your boat also remotely. They are visible in the device details in your Meshtastic app:

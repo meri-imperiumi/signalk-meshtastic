@@ -65,4 +65,29 @@ describe('plugin', () => {
     assert.deepEqual(crashes, []);
     assert.ok(statuses.includes('Waiting for Meshtastic library to load'));
   });
+
+  it('offers the signed commands setting before any node has connected', () => {
+    const dataDir = mkdtempSync(join(tmpdir(), 'signalk-meshtastic-test-'));
+    const serverApp = {
+      debug: () => {},
+      error: () => {},
+      setPluginStatus: () => {},
+      setPluginError: () => {},
+      getDataDirPath: () => dataDir,
+      handleMessage: () => {},
+    };
+    const serverPlugin = pluginFactory(serverApp);
+    serverPlugin.start({});
+    try {
+      const schema = serverPlugin.schema();
+      const setting = schema.properties.communications.properties.require_signed_commands;
+      assert.equal(setting.type, 'boolean');
+      // No DeviceMetadata yet, so nothing has ruled the setting out
+      assert.equal(setting.disabled, undefined);
+      assert.match(setting.description, /verified cryptographically/);
+    } finally {
+      serverPlugin.stop();
+      rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
 });

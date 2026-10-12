@@ -61,23 +61,35 @@ function historyApp(rows, to) {
   };
 }
 
-// Every message the command sent, in order
-function handleMessages(paths, settings = {}, timestamps = {}, history = {}, units = {}) {
+// Every message the command sent, in order, with the channel it went out on
+function handleMessages(
+  paths,
+  settings = {},
+  timestamps = {},
+  history = {},
+  units = {},
+  channel = 0,
+) {
   const sent = [];
   const device = {
-    sendText: (text) => {
-      sent.push(text);
+    sendText: (text, to, wantAck, replyChannel) => {
+      sent.push({
+        text,
+        to,
+        wantAck,
+        channel: replyChannel,
+      });
       return Promise.resolve();
     },
   };
   const app = Object.assign(mockApp(paths, timestamps, units), history);
-  return status.handle({ data: 'Status', from: 1 }, settings, device, app)
+  return status.handle({ data: 'Status', from: 1, channel }, settings, device, app)
     .then(() => sent);
 }
 
 // The whole reply, however many messages it was split across
 function handle(...args) {
-  return handleMessages(...args).then((sent) => sent.join('\n'));
+  return handleMessages(...args).then((sent) => sent.map((message) => message.text).join('\n'));
 }
 
 describe('status command', () => {
@@ -463,6 +475,17 @@ describe('status command status tiles', () => {
     }));
 });
 
+describe('status command reply channel', () => {
+  it('replies on the channel the command arrived from', () => handleMessages({}, {}, {}, {}, {}, 2)
+    .then((sent) => {
+      assert.ok(sent.length > 0);
+      sent.forEach((message) => {
+        assert.equal(message.to, 1);
+        assert.equal(message.channel, 2);
+      });
+    }));
+});
+
 describe('status command message splitting', () => {
   const manyPaths = {};
   const manyConfigured = [];
@@ -476,7 +499,7 @@ describe('status command message splitting', () => {
   it('sends a reply that fits as a single message', () => handleMessages({})
     .then((sent) => {
       assert.equal(sent.length, 1);
-      assert.ok(bytes(sent[0]) <= 200, `${bytes(sent[0])} bytes`);
+      assert.ok(bytes(sent[0].text) <= 200, `${bytes(sent[0].text)} bytes`);
     }));
 
   it('splits a long reply between lines, never inside one', () => handleMessages(
@@ -486,11 +509,11 @@ describe('status command message splitting', () => {
     .then((sent) => {
       assert.ok(sent.length > 1, `expected a split, got ${sent.length} message(s)`);
       sent.forEach((message) => {
-        assert.ok(bytes(message) <= 200, `${bytes(message)} bytes: ${message}`);
-        assert.ok(message.length, 'no empty messages');
+        assert.ok(bytes(message.text) <= 200, `${bytes(message.text)} bytes: ${message.text}`);
+        assert.ok(message.text.length, 'no empty messages');
       });
       // Each line survives whole, in order, split only between lines
-      const lines = sent.flatMap((message) => message.split('\n'));
+      const lines = sent.flatMap((message) => message.text.split('\n'));
       assert.deepEqual(lines, [
         'Anchor: not set',
         'Depth: n/a',
@@ -506,7 +529,7 @@ describe('status command message splitting', () => {
     communications: { status_paths: [{ path: 'sensors.verbose.reading', label: 'Long' }] },
   })
     .then((sent) => {
-      const long = sent.find((message) => message.startsWith('Long: '));
+      const long = sent.find((message) => message.text.startsWith('Long: ')).text;
       assert.ok(long, 'the long line was sent');
       assert.ok(bytes(long) <= 200, `${bytes(long)} bytes`);
       // Cut between characters, so it is still valid UTF-8

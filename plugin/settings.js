@@ -45,6 +45,33 @@ function nodeRole(settings, nodeNum) {
   return configured ? configured.role : undefined;
 }
 
+// Meshtastic channel index the plugin's broadcasts — environment metrics and
+// MOB waypoints — are sent on. Channel 0 is the primary channel every node
+// shares; a boat that keeps its telemetry on a secondary channel points this
+// at that channel's index instead
+//
+// Direct messages need no channel choice: they are encrypted for the
+// recipient rather than with the channel key, so command replies simply
+// travel on the channel the command arrived from
+function broadcastChannel(settings) {
+  const channel = communications(settings).broadcast_channel;
+  if (Number.isInteger(channel) && channel >= 0 && channel <= 7) {
+    return channel;
+  }
+  return 0;
+}
+
+// Whether commands must arrive in cryptographically verified packets to be
+// executed. A packet counts as verified when the boat node's firmware
+// validated its signature (Meshtastic 2.8), or when it was PKI-encrypted with
+// the recipient's public key, so only the node holding the key bound to the
+// claimed sender number could have produced it (Meshtastic 2.5). Unverified
+// packets may carry a forged sender number; with this on, commands in them
+// are refused
+function requireSignedCommands(settings) {
+  return Boolean(communications(settings).require_signed_commands);
+}
+
 function sendAlerts(settings) {
   return Boolean(communications(settings).send_alerts);
 }
@@ -75,6 +102,8 @@ module.exports = {
   nodeRole,
   sendAlerts,
   statusPaths,
+  broadcastChannel,
+  requireSignedCommands,
   DEFAULT_STATUS_PATHS,
   HOUSE_SOC_PATH,
 };

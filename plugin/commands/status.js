@@ -387,7 +387,7 @@ module.exports = {
       status.push(nodeStatus(msg, settings));
       // One message where it fits, otherwise several sent in order
       return messagesFor(status).reduce(
-        (prev, text) => prev.then(() => device.sendText(text, msg.from, true, false)),
+        (prev, text) => prev.then(() => device.sendText(text, msg.from, true, msg.channel)),
         Promise.resolve(),
       );
     }),

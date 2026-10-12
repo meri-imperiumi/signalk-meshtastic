@@ -1,6 +1,8 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
+const { sendMOB } = require('../plugin/waypoint');
+
 const waypointCommand = require('../plugin/commands/waypoint');
 
 const Protobuf = {
@@ -37,10 +39,10 @@ function fakeApp(vessels) {
   };
 }
 
-function handle(data, vessels, from = 1337) {
+function handle(data, vessels, from = 1337, channel = 0) {
   const { device, sentTexts, sentWaypoints } = fakeDevice();
   const result = waypointCommand.handle(
-    { data, from },
+    { data, from, channel },
     {},
     device,
     fakeApp(vessels),
@@ -124,6 +126,57 @@ describe('waypoint command', () => {
     assert.equal(sentTexts.length, 1);
     assert.equal(sentTexts[0].msg, 'Unable to find vessel Nobody');
     assert.equal(sentTexts[0].node, 1337);
+  });
+
+  it('sends the waypoint reply on the channel the command arrived from', async () => {
+    const vessels = {
+      'vessels.urn:mrn:imo:mmsi:123456789': {
+        mmsi: '123456789',
+        name: 'Lucky Duck',
+        navigation: {
+          position: {
+            value: {
+              latitude: 60.15,
+              longitude: 24.96,
+            },
+          },
+        },
+      },
+    };
+    const { sentWaypoints, result } = handle('Waypoint lucky duck', vessels, 1337, 2);
+    await result;
+    assert.equal(sentWaypoints.length, 1);
+    assert.equal(sentWaypoints[0].node, 1337);
+    assert.equal(sentWaypoints[0].channel, 2);
+  });
+
+  it('broadcasts an MOB waypoint on the configured channel', async () => {
+    const sentWaypoints = [];
+    const device = {
+      sendWaypoint: (waypoint, node, channel) => {
+        sentWaypoints.push({ waypoint, node, channel });
+        return Promise.resolve();
+      },
+    };
+    const app = {
+      signalk: {
+        root: {
+          vessels: {},
+        },
+      },
+    };
+    await sendMOB(
+      'notifications.mob.123456789',
+      { position: { latitude: 60.15, longitude: 24.96 } },
+      app,
+      device,
+      create,
+      Protobuf,
+      2,
+    );
+    assert.equal(sentWaypoints.length, 1);
+    assert.equal(sentWaypoints[0].node, 'broadcast');
+    assert.equal(sentWaypoints[0].channel, 2);
   });
 
   it('replies with an error text for vessels without a position', async () => {

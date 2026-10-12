@@ -3,12 +3,17 @@ const { join } = require('path');
 
 const Telemetry = require('./telemetry');
 const commands = require('./commands/index');
+const { migrateIdentity, nodeIdHistory, staleRoles } = require('./identity');
+const { nodeCanVerify, isVerified } = require('./verification');
+const { hasValidPosition, truncationRadius } = require('./precision');
 const { sendMOB } = require('./waypoint');
 const { sendNotification, sweepNotifications } = require('./notifications');
 const {
   environmentMetricsInterval,
   anchorRadiusPath,
   DEFAULT_STATUS_PATHS,
+  broadcastChannel,
+  requireSignedCommands,
 } = require('./settings');
 
 if (!global.crypto) {
@@ -109,7 +114,7 @@ function nodeToSignalK(app, node, nodeInfo, settings) {
     },
   ];
 
-  if (nodeInfo.position && Number.isFinite(nodeInfo.position.latitudeI)) {
+  if (hasValidPosition(nodeInfo.position)) {
     values.push({
       path: 'navigation.position',
       value: {
@@ -232,6 +237,12 @@ module.exports = (app) => {
     meshtastic: [],
   };
   const nodes = {};
+  // Whether the boat node's firmware can verify packet signatures —
+  // Meshtastic 2.8 or newer with verification compiled in. Null until the
+  // boat node has reported its DeviceMetadata. Lives at module scope so the
+  // configuration schema can gray the setting out when the connected boat
+  // node is too old
+  let nodeVerification = null;
   const telemetry = new Telemetry();
   let publishInterval;
   let sweepInterval;
@@ -296,6 +307,24 @@ module.exports = (app) => {
 
     const nodeDbFile = join(app.getDataDirPath(), 'node-db.json');
 
+    // Verification verdicts by packet id, for the command dispatch to check.
+    // Bounded: the oldest half is dropped whenever it grows past the cap, so
+    // a long-running server cannot accumulate entries without bound
+    const verificationByPacketId = new Map();
+    const VERIFICATION_REGISTRY_MAX = 1024;
+    // Node numbers a re-key alert is currently raised for, so the clearing
+    // null is only published for nodes that actually had one
+    const rekeyAlerts = new Set();
+
+    const rememberVerification = (meshPacket) => {
+      verificationByPacketId.set(meshPacket.id, isVerified(meshPacket));
+      if (verificationByPacketId.size > VERIFICATION_REGISTRY_MAX) {
+        const toDrop = Array.from(verificationByPacketId.keys())
+          .slice(0, Math.floor(VERIFICATION_REGISTRY_MAX / 2));
+        toDrop.forEach((id) => verificationByPacketId.delete(id));
+      }
+    };
+
     telemetry.setAnchorRadiusPath(anchorRadiusPath(settings));
 
     const metricsInterval = environmentMetricsInterval(settings);
@@ -321,7 +350,7 @@ module.exports = (app) => {
           toBinary(Protobuf.Telemetry.TelemetrySchema, telemetryMessage),
           Protobuf.Portnums.PortNum.TELEMETRY_APP,
           'broadcast',
-          0,
+          broadcastChannel(settings),
           true,
           false,
         )
@@ -604,11 +633,18 @@ module.exports = (app) => {
             setConnectionStatus();
           }),
           device.events.onNodeInfoPacket.subscribe((nodeInfo) => {
-            if (!nodes[nodeInfo.num]) {
-              nodes[nodeInfo.num] = {};
-            }
             if (!nodeInfo.user) {
               return;
+            }
+            // Meshtastic 2.8 derives the node number from the public key, so
+            // flashing a node with 2.8 changes its number. A known public key
+            // re-appearing under a new number is the same physical node:
+            // migrate the identity and vessel association to the new number,
+            // and prune the old one, keeping the old numbers in the entry's id
+            // history
+            migrateIdentity(nodes, nodeInfo);
+            if (!nodes[nodeInfo.num]) {
+              nodes[nodeInfo.num] = {};
             }
             nodes[nodeInfo.num].longName = nodeInfo.user.longName;
             nodes[nodeInfo.num].shortName = nodeInfo.user.shortName;
@@ -625,10 +661,56 @@ module.exports = (app) => {
                 nodes[nodeInfo.num].mmsi = ctx.split(':').at(-1);
               }
             }
+            // Roles configured for a number in this node's history are stale
+            // after a re-key. Roles authorize commands, and the evidence for
+            // the re-key is a NodeInfo — unauthenticated on boat nodes before
+            // 2.8 — so they are never remapped automatically. Alert while
+            // they need reassignment, clear once the configuration no longer
+            // references the old numbers. Nodes without a history get no
+            // notification traffic at all
+            const stale = staleRoles(nodes[nodeInfo.num], settings);
+            if (stale.length) {
+              rekeyAlerts.add(nodeInfo.num);
+            }
+            if (stale.length || rekeyAlerts.has(nodeInfo.num)) {
+              if (!stale.length) {
+                rekeyAlerts.delete(nodeInfo.num);
+              }
+              app.handleMessage('signalk-meshtastic', {
+                context: 'vessels.self',
+                updates: [
+                  {
+                    source: {
+                      label: 'signalk-meshtastic',
+                      src: String(nodeInfo.num),
+                    },
+                    timestamp: new Date().toISOString(),
+                    values: [{
+                      path: `notifications.meshtastic.rekey.${nodeInfo.num}`,
+                      value: stale.length ? {
+                        state: 'alert',
+                        method: ['visual'],
+                        message: `Meshtastic node ${nodeInfo.user.longName || nodeInfo.num} re-keyed from ${nodeIdHistory(nodes[nodeInfo.num]).join(', ')} to ${nodeInfo.num}. Reassign its ${stale.map((role) => role.role).join(', ')} role in the plugin configuration`,
+                      } : null,
+                    }],
+                  },
+                ],
+              });
+            }
+            if (stale.length) {
+              app.debug(`Meshtastic node ${nodeInfo.num} has roles configured for its old numbers: ${stale.map((role) => role.role).join(', ')}`);
+            }
             setConnectionStatus();
             writeNodeDb();
           }),
+          device.events.onDeviceMetadataPacket.subscribe((metadata) => {
+            nodeVerification = nodeCanVerify(metadata);
+            if (requireSignedCommands(settings) && nodeVerification === false) {
+              app.setPluginStatus(`Meshtastic node at ${settings.device.address} runs firmware older than 2.8: packet signatures cannot be verified, but PKI-encrypted direct messages still are`);
+            }
+          }),
           device.events.onMeshPacket.subscribe((packet) => {
+            rememberVerification(packet);
             if (!nodes[packet.from]) {
               nodes[packet.from] = {};
             }
@@ -641,7 +723,16 @@ module.exports = (app) => {
             setConnectionStatus();
           }),
           device.events.onMessagePacket.subscribe((message) => {
-            commands.dispatch(message, settings, device, app, create, Protobuf, nodes);
+            commands.dispatch(
+              message,
+              settings,
+              device,
+              app,
+              create,
+              Protobuf,
+              nodes,
+              { verified: verificationByPacketId.get(message.id) },
+            );
           }),
           device.events.onTelemetryPacket.subscribe((packet) => {
             if (!nodes[packet.from]) {
@@ -762,6 +853,11 @@ module.exports = (app) => {
               // We don't need to loop back here
               return;
             }
+            if (!hasValidPosition(position.data)) {
+              // Channels with zero position precision strip the position
+              // entirely, leaving protobuf defaults: nothing to publish
+              return;
+            }
             let groundTrack = 0;
             if (position.data.groundTrack) {
               groundTrack = position.data.groundTrack * 1e-5 * (Math.PI / 180);
@@ -791,6 +887,16 @@ module.exports = (app) => {
                 value: position.data.altitude || 0,
               },
             ];
+            const accuracy = truncationRadius(position.data);
+            if (accuracy) {
+              // How far off the position can be because the sender truncated
+              // it for the channel: undefined when it was sent at full
+              // precision
+              values.push({
+                path: 'communication.meshtastic.positionAccuracy',
+                value: Math.round(accuracy),
+              });
+            }
             app.handleMessage('signalk-meshtastic', {
               context,
               updates: [
@@ -897,7 +1003,15 @@ module.exports = (app) => {
                   sendNotification(v.path, v.value, episodes, settings, device, app);
                   if (v.path.indexOf('notifications.mob.') === 0) {
                     // This is a notification about a MOB beacon, create waypoint
-                    sendMOB(v.path, v.value, app, device, create, Protobuf);
+                    sendMOB(
+                      v.path,
+                      v.value,
+                      app,
+                      device,
+                      create,
+                      Protobuf,
+                      broadcastChannel(settings),
+                    );
                   }
                   return;
                 }
@@ -942,6 +1056,9 @@ module.exports = (app) => {
   plugin.stop = () => {
     // Invalidate startups that are still connecting
     startupGeneration += 1;
+    // The boat node is gone until the plugin connects again; forget what
+    // its firmware could and could not verify
+    nodeVerification = null;
     if (publishInterval) {
       clearInterval(publishInterval);
       publishInterval = undefined;
@@ -1094,6 +1211,23 @@ module.exports = (app) => {
               title: 'How often to send environment metrics (wind, temperature, etc) to Meshtastic, in seconds. Set to 0 to disable',
               default: 0,
               minimum: 0,
+            },
+            broadcast_channel: {
+              type: 'integer',
+              title: 'Meshtastic channel to broadcast on',
+              description: 'Environment metrics and MOB waypoints are broadcast on this channel index. Channel 0 is the primary channel every node shares; use the index of a secondary channel to keep the broadcasts off the public mesh. Direct messages to crew and replies to commands are encrypted for the recipient, and replies travel on the channel the command arrived from',
+              default: 0,
+              minimum: 0,
+              maximum: 7,
+            },
+            require_signed_commands: {
+              type: 'boolean',
+              title: 'Require commands to be cryptographically signed',
+              description: nodeVerification === false
+                ? 'Not available: the connected Meshtastic node runs firmware older than 2.8 and cannot verify packet signatures. Update its firmware to enable this setting'
+                : 'Commands that control the boat (digital switching etc) are only executed when their packet was verified cryptographically: signed with the sending node\'s key, or PKI-encrypted so only the node holding that key could have sent it. Unverified packets may carry a forged sender number. Sending nodes need Meshtastic 2.8 or newer with packet signing, and the boat node needs 2.8 or newer for signature verification',
+              default: false,
+              ...(nodeVerification === false ? { disabled: true } : {}),
             },
             anchor_radius_path: {
               type: 'string',

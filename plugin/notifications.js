@@ -110,7 +110,7 @@ function sendToCrew(text, settings, device, app, errorLabel) {
 
   // Send message to each crew member
   return crew.reduce(
-    (prev, member) => prev.then(() => device.sendText(text, member.node, true, false)),
+    (prev, member) => prev.then(() => device.sendText(text, member.node, true, 0)),
     Promise.resolve(),
   )
     .catch((e) => app.error(`Failed to send ${errorLabel}: ${e.message}`));

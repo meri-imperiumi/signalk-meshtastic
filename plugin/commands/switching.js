@@ -28,6 +28,6 @@ module.exports = {
         resolve();
       });
     })
-      .then(() => device.sendText(`OK, ${light} is ${switching[2]}`, msg.from, true, false));
+      .then(() => device.sendText(`OK, ${light} is ${switching[2]}`, msg.from, true, msg.channel));
   },
 };

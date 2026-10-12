@@ -7,6 +7,7 @@ const {
   nodeRole,
   sendAlerts,
   statusPaths,
+  broadcastChannel,
 } = require('../plugin/settings');
 
 describe('environment metrics interval', () => {
@@ -105,6 +106,23 @@ describe('send alerts', () => {
 
   it('is on when enabled', () => {
     assert.equal(sendAlerts({ communications: { send_alerts: true } }), true);
+  });
+});
+
+describe('broadcast channel', () => {
+  it('broadcasts on the primary channel by default', () => {
+    assert.equal(broadcastChannel({}), 0);
+    assert.equal(broadcastChannel({ communications: {} }), 0);
+  });
+
+  it('uses the configured channel index', () => {
+    assert.equal(broadcastChannel({ communications: { broadcast_channel: 2 } }), 2);
+  });
+
+  it('falls back to the primary channel for invalid values', () => {
+    assert.equal(broadcastChannel({ communications: { broadcast_channel: 8 } }), 0);
+    assert.equal(broadcastChannel({ communications: { broadcast_channel: -1 } }), 0);
+    assert.equal(broadcastChannel({ communications: { broadcast_channel: 'longfast' } }), 0);
   });
 });
 

@@ -137,6 +137,81 @@ describe('command dispatch', () => {
   });
 });
 
+describe('verified command dispatch', () => {
+  beforeEach(() => {
+    fallback.reset();
+  });
+
+  const signedSettings = {
+    nodes: [{ node: CREW, role: 'crew' }],
+    communications: {
+      require_signed_commands: true,
+      digital_switching: true,
+    },
+  };
+
+  function dispatchVerified(device, msg, verification) {
+    return commands.dispatch(
+      msg,
+      signedSettings,
+      device,
+      app,
+      undefined,
+      undefined,
+      undefined,
+      verification,
+    );
+  }
+
+  it('refuses commands in unverified packets when the setting is on', () => {
+    const device = mockDevice();
+    return dispatchVerified(device, dm(CREW, 'Turn decklight on'), { verified: false })
+      .then(() => {
+        assert.equal(device.sent.length, 1);
+        assert.equal(device.sent[0].to, CREW);
+        assert.match(device.sent[0].text, /^Command refused/);
+        // The switch was never operated
+      });
+  });
+
+  it('lets unverified strangers get the fallback explanation', () => {
+    const device = mockDevice();
+    return dispatchVerified(device, dm(STRANGER, 'Hello there'), { verified: false })
+      .then(() => {
+        assert.equal(device.sent.length, 1);
+        assert.match(device.sent[0].text, /^Automated boat node/);
+      });
+  });
+
+  it('executes commands in packets the boat node verified', () => {
+    const device = mockDevice();
+    return dispatchVerified(device, dm(CREW, 'Ping'), { verified: true })
+      .then(() => {
+        assert.deepEqual(device.sent, [{ text: 'Pong', to: CREW }]);
+      });
+  });
+
+  it('executes commands in PKI-encrypted packets', () => {
+    const device = mockDevice();
+    return dispatchVerified(device, dm(CREW, 'Ping'), { verified: true })
+      .then(() => {
+        assert.deepEqual(device.sent, [{ text: 'Pong', to: CREW }]);
+      });
+  });
+
+  it('leaves verification to the boat node when the setting is off', () => {
+    const device = mockDevice();
+    const off = {
+      nodes: [{ node: CREW, role: 'crew' }],
+      communications: { require_signed_commands: false },
+    };
+    return commands.dispatch(dm(CREW, 'Ping'), off, device, app, undefined, undefined, undefined, { verified: false })
+      .then(() => {
+        assert.deepEqual(device.sent, [{ text: 'Pong', to: CREW }]);
+      });
+  });
+});
+
 describe('fallback rate limit', () => {
   beforeEach(() => {
     fallback.reset();

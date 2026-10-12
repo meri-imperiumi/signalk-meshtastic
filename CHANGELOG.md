@@ -1,8 +1,15 @@
 # Changelog
 ## [Unreleased]
 ### Added
+- Positions received with reduced precision (Meshtastic 2.8 public channels truncate positions to the precision configured for the channel) are published with their maximum error in meters as `communication.meshtastic.positionAccuracy`, so instrument panels can show the uncertainty instead of a falsely exact fix
+- New setting "Require commands to be cryptographically signed": commands that operate the boat (digital switching etc) are only executed when their packet was verified cryptographically — signed with the sending node's key (Meshtastic 2.8 or newer), or PKI-encrypted so only the key holder could have produced it. Unverified packets may carry a forged sender number and are refused. The sending node gets a reply telling it to upgrade to packet signing. The setting is disabled in the plugin configuration when the connected boat node runs firmware older than 2.8 and cannot verify signatures
+- Meshtastic 2.8 compatibility: node numbers are now derived from the public key, so a node flashed with 2.8 re-appears under a new number. When a known public key shows up under a new number the plugin migrates the node identity and vessel association to the new number, records the old number in the entry's id history, and prunes the old entry from the node database. Configured node roles are not remapped automatically: the migration raises a Signal K notification telling the admin to reassign them, since a forged NodeInfo cannot then hand out crew privileges over mesh input alone
+- New setting `broadcast_channel` selecting the Meshtastic channel index environment metrics and MOB waypoints are broadcast on, so they can be kept off the public primary channel. Replies to commands travel on the channel the command arrived from; direct messages are encrypted for the recipient, so their channel carries no key choice
 - The status reply now appends the overall energy outlook from the `signalk-energy-predictor` plugin to the house bank SoC line when that plugin is installed, as "SoC: 100%, surplus" (or rising, stable, deficit, critical). Without the SoC entry in the configured status paths the outlook is left out
 - The status reply summarizes the `signalk-status-tiles` plugin tile states when that plugin is installed and has tiles: "Systems: all green" when everything monitored is fine, otherwise which tile ids are red or amber. Tiles in the opportunity or neutral (context inactive) states are ignored
+
+### Fixed
+- Positions arriving without coordinates — a Meshtastic 2.8 channel with zero position precision strips the position entirely — are no longer ingested as latitude 0, longitude 0. The same check applies to positions published through the node database
 
 ## [1.7.1] - 2026-10-09
 ### Added

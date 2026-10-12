@@ -48,13 +48,13 @@ module.exports = {
       entry.author = author;
     }
     if (!entry.text) {
-      return device.sendText('Nothing to log', msg.from, true, false);
+      return device.sendText('Nothing to log', msg.from, true, msg.channel);
     }
     if (!app.resourcesApi || typeof app.resourcesApi.setResource !== 'function') {
-      return device.sendText('Logbook not available', msg.from, true, false);
+      return device.sendText('Logbook not available', msg.from, true, msg.channel);
     }
     return app.resourcesApi.setResource('logentries', randomUUID(), entry)
-      .then(() => device.sendText('OK, logged', msg.from, true, false))
-      .catch((err) => device.sendText(`Logging failed: ${err.message}`, msg.from, true, false));
+      .then(() => device.sendText('OK, logged', msg.from, true, msg.channel))
+      .catch((err) => device.sendText(`Logging failed: ${err.message}`, msg.from, true, msg.channel));
   },
 };

@@ -39,6 +39,7 @@ function sendWaypoint(
   device,
   create,
   Protobuf,
+  channel = 0,
 ) {
   const setWaypointMessage = create(Protobuf.Mesh.WaypointSchema, {
     id,
@@ -49,10 +50,10 @@ function sendWaypoint(
     description,
     icon,
   });
-  return device.sendWaypoint(setWaypointMessage, target, 0);
+  return device.sendWaypoint(setWaypointMessage, target, channel);
 }
 
-function sendMOB(path, value, app, device, create, Protobuf) {
+function sendMOB(path, value, app, device, create, Protobuf, channel = 0) {
   let mobPosition;
   let mobVessel = {
     name: 'MOB beacon',
@@ -89,6 +90,7 @@ function sendMOB(path, value, app, device, create, Protobuf) {
     device,
     create,
     Protobuf,
+    channel,
   );
 }
 
