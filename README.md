@@ -52,7 +52,6 @@ In production use on several boats.
 
 * Guard mode to alert if the tracked dinghy moves
 * Keeping a mileage log for the dinghy
-* More text commands over Meshtastic to query vessel status etc
 
 ## Requirements
 
