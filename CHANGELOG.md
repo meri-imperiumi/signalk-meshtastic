@@ -1,5 +1,7 @@
 # Changelog
 ## [Unreleased]
+
+## [1.8.0] - 2026-10-12
 ### Added
 - Positions received with reduced precision (Meshtastic 2.8 public channels truncate positions to the precision configured for the channel) are published with their maximum error in meters as `communication.meshtastic.positionAccuracy`, so instrument panels can show the uncertainty instead of a falsely exact fix
 - New setting "Require commands to be cryptographically signed": commands that operate the boat (digital switching etc) are only executed when their packet was verified cryptographically — signed with the sending node's key (Meshtastic 2.8 or newer), or PKI-encrypted so only the key holder could have produced it. Unverified packets may carry a forged sender number and are refused. The sending node gets a reply telling it to upgrade to packet signing. The setting is disabled in the plugin configuration when the connected boat node runs firmware older than 2.8 and cannot verify signatures
