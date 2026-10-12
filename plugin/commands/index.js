@@ -26,7 +26,7 @@ exports.help = {
   accept: (msg) => (msg.data.toLowerCase() === 'help'),
   handle: (msg, settings, device) => {
     const commands = exports.available(msg, settings).map((name) => exports[name].example);
-    return device.sendText(`Commands: ${commands.join(', ')}`, msg.from, true, msg.channel);
+    return device.sendText(`Commands: ${commands.join(', ')}`, msg.from, true, msg.channel, msg.id);
   },
 };
 
@@ -64,6 +64,7 @@ exports.dispatch = (msg, settings, device, app, create, Protobuf, nodeDb, verifi
       msg.from,
       true,
       msg.channel,
+      msg.id,
     );
   }
   const publicMatching = matching.filter((name) => !exports[name].crewOnly);

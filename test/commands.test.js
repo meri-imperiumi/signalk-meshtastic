@@ -20,8 +20,10 @@ function mockDevice() {
   return {
     sent,
     myNodeInfo: { myNodeNum: SELF },
-    sendText: (text, to) => {
-      sent.push({ text, to });
+    sendText: (text, to, wantAck, channel, replyId) => {
+      sent.push({
+        text, to, wantAck, channel, replyId,
+      });
       return Promise.resolve();
     },
   };
@@ -32,12 +34,13 @@ const app = {
   error: () => {},
 };
 
-function dm(from, data) {
+function dm(from, data, id) {
   return {
     type: 'direct',
     from,
     to: SELF,
     data,
+    id,
   };
 }
 
@@ -52,9 +55,14 @@ describe('command dispatch', () => {
 
   it('answers known commands without the fallback', () => {
     const device = mockDevice();
-    return dispatch(device, dm(STRANGER, 'Ping'))
+    return dispatch(device, dm(STRANGER, 'Ping', 4711))
       .then(() => {
-        assert.deepEqual(device.sent, [{ text: 'Pong', to: STRANGER }]);
+        // The reply is threaded to the command message so client apps can
+        // render it as a reply
+        assert.equal(device.sent.length, 1);
+        assert.equal(device.sent[0].text, 'Pong');
+        assert.equal(device.sent[0].to, STRANGER);
+        assert.equal(device.sent[0].replyId, 4711);
       });
   });
 
@@ -187,7 +195,7 @@ describe('verified command dispatch', () => {
     const device = mockDevice();
     return dispatchVerified(device, dm(CREW, 'Ping'), { verified: true })
       .then(() => {
-        assert.deepEqual(device.sent, [{ text: 'Pong', to: CREW }]);
+        assert.deepEqual(device.sent.map((s) => s.to), [CREW]);
       });
   });
 
@@ -195,7 +203,7 @@ describe('verified command dispatch', () => {
     const device = mockDevice();
     return dispatchVerified(device, dm(CREW, 'Ping'), { verified: true })
       .then(() => {
-        assert.deepEqual(device.sent, [{ text: 'Pong', to: CREW }]);
+        assert.deepEqual(device.sent.map((s) => s.to), [CREW]);
       });
   });
 
@@ -207,7 +215,7 @@ describe('verified command dispatch', () => {
     };
     return commands.dispatch(dm(CREW, 'Ping'), off, device, app, undefined, undefined, undefined, { verified: false })
       .then(() => {
-        assert.deepEqual(device.sent, [{ text: 'Pong', to: CREW }]);
+        assert.deepEqual(device.sent.map((s) => s.to), [CREW]);
       });
   });
 });

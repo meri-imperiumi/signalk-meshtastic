@@ -28,7 +28,7 @@ function handle(msg, device, commands, now = Date.now()) {
     return Promise.resolve(false);
   }
   lastReply.set(msg.from, now);
-  return device.sendText(message(commands), msg.from, true, msg.channel)
+  return device.sendText(message(commands), msg.from, true, msg.channel, msg.id)
     .then(() => true);
 }
 

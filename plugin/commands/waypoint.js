@@ -45,7 +45,7 @@ module.exports = {
       });
 
     if (!waypointVesselCtx) {
-      return device.sendText(`Unable to find vessel ${identifier}`, msg.from, true, msg.channel);
+      return device.sendText(`Unable to find vessel ${identifier}`, msg.from, true, msg.channel, msg.id);
     }
 
     const waypointVessel = app.signalk.root.vessels[waypointVesselCtx];
@@ -60,6 +60,7 @@ module.exports = {
         msg.from,
         true,
         msg.channel,
+        msg.id,
       );
     }
 
