@@ -10,17 +10,33 @@ function ago(seconds) {
 function mockApp(paths, timestamps = {}, units = {}) {
   return {
     getSelfPath: (path) => {
-      if (!(path in paths)) {
-        return undefined;
+      if (path in paths) {
+        const node = {
+          value: paths[path],
+          timestamp: timestamps[path] || new Date().toISOString(),
+        };
+        if (units[path]) {
+          node.meta = { units: units[path] };
+        }
+        return node;
       }
-      const node = {
-        value: paths[path],
-        timestamp: timestamps[path] || new Date().toISOString(),
-      };
-      if (units[path]) {
-        node.meta = { units: units[path] };
+      // An intermediate path, like the branch the status tiles plugin
+      // publishes one leaf per tile under, comes back as the subtree of
+      // leaf nodes below it
+      const prefix = `${path}.`;
+      const subtree = {};
+      Object.keys(paths).forEach((key) => {
+        if (key.startsWith(prefix)) {
+          subtree[key.slice(prefix.length)] = {
+            value: paths[key],
+            timestamp: timestamps[key] || new Date().toISOString(),
+          };
+        }
+      });
+      if (Object.keys(subtree).length) {
+        return subtree;
       }
-      return node;
+      return undefined;
     },
   };
 }
@@ -353,6 +369,97 @@ describe('status command wind history', () => {
   ]))
     .then((sent) => {
       assert.equal(sent, 'Anchor: not set\nDepth: n/a\nWind: 12.2kn 245T\nNode: not configured, no alerts');
+    }));
+});
+
+describe('status command energy outlook', () => {
+  it('appends the energy predictor assessment to the SoC line', () => handle({
+    'electrical.energy.prediction.status': 'surplus',
+    'electrical.batteries.house.capacity.stateOfCharge': 1,
+  }, {}, {}, {}, {
+    'electrical.batteries.house.capacity.stateOfCharge': 'ratio',
+  })
+    .then((sent) => {
+      assert.ok(sent.includes('SoC: 100%, surplus'), sent);
+      assert.ok(!sent.includes('\nEnergy:'), sent);
+    }));
+
+  it('reports the plain SoC line on a boat without the energy predictor', () => handle({
+    'electrical.batteries.house.capacity.stateOfCharge': 0.8734,
+  }, {}, {}, {}, {
+    'electrical.batteries.house.capacity.stateOfCharge': 'ratio',
+  })
+    .then((sent) => {
+      assert.ok(sent.includes('SoC: 87%\n'), sent);
+    }));
+
+  it('stays quiet about the outlook when no prediction has run yet', () => handle({
+    'electrical.energy.prediction.status': null,
+    'electrical.batteries.house.capacity.stateOfCharge': 0.8734,
+  }, {}, {}, {}, {
+    'electrical.batteries.house.capacity.stateOfCharge': 'ratio',
+  })
+    .then((sent) => {
+      assert.ok(sent.includes('SoC: 87%\n'), sent);
+      assert.ok(!sent.includes('surplus'), sent);
+    }));
+
+  it('leaves the outlook out when the user removed the SoC entry', () => handle({
+    'electrical.energy.prediction.status': 'surplus',
+  }, { communications: { status_paths: [] } })
+    .then((sent) => {
+      assert.ok(!sent.includes('surplus'), sent);
+    }));
+});
+
+describe('status command status tiles', () => {
+  const green = {
+    'statusTiles.tiles.housebank': 'green',
+    'statusTiles.tiles.bilge': 'green',
+  };
+
+  it('reports all systems green when every tile is green', () => handle({
+    'environment.depth.belowSurface': 4.24,
+    ...green,
+  })
+    .then((sent) => {
+      assert.ok(sent.includes('\nSystems: all green\n'), sent);
+    }));
+
+  it('names the red and amber tiles, ignoring opportunity and neutral', () => handle({
+    'statusTiles.tiles.housebank': 'red',
+    'statusTiles.tiles.bilge': 'amber',
+    'statusTiles.tiles.watermaker': 'opportunity',
+    'statusTiles.tiles.anchor': 'neutral',
+    'statusTiles.tiles.fridge': 'green',
+  })
+    .then((sent) => {
+      assert.ok(sent.includes('\nSystems: red housebank; amber bilge\n'), sent);
+      assert.ok(!sent.includes('watermaker'), sent);
+      assert.ok(!sent.includes('anchor'), sent);
+      assert.ok(!sent.includes('all green'), sent);
+    }));
+
+  it('reports a lone red tile without the amber group', () => handle({
+    'statusTiles.tiles.housebank': 'red',
+  })
+    .then((sent) => {
+      assert.ok(sent.includes('\nSystems: red housebank\n'), sent);
+    }));
+
+  it('reports nothing when every tile is opportunity or neutral', () => handle({
+    'statusTiles.tiles.watermaker': 'opportunity',
+    'statusTiles.tiles.anchor': 'neutral',
+  })
+    .then((sent) => {
+      assert.ok(!sent.includes('Systems:'), sent);
+    }));
+
+  it('stays quiet on a boat without status tiles', () => handle({
+    'environment.depth.belowSurface': 4.24,
+  })
+    .then((sent) => {
+      assert.ok(!sent.includes('Systems:'), sent);
     }));
 });
 

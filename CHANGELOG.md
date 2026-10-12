@@ -1,5 +1,8 @@
 # Changelog
 ## [Unreleased]
+### Added
+- The status reply now appends the overall energy outlook from the `signalk-energy-predictor` plugin to the house bank SoC line when that plugin is installed, as "SoC: 100%, surplus" (or rising, stable, deficit, critical). Without the SoC entry in the configured status paths the outlook is left out
+- The status reply summarizes the `signalk-status-tiles` plugin tile states when that plugin is installed and has tiles: "Systems: all green" when everything monitored is fine, otherwise which tile ids are red or amber. Tiles in the opportunity or neutral (context inactive) states are ignored
 
 ## [1.7.1] - 2026-10-09
 ### Added

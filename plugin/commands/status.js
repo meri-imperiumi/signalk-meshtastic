@@ -3,6 +3,7 @@ const {
   nodeRole,
   sendAlerts,
   statusPaths,
+  HOUSE_SOC_PATH,
 } = require('../settings');
 
 const RAD_TO_DEG = 180 / Math.PI;
@@ -13,6 +14,13 @@ const MAX_AGE_MS = 60000;
 // Values that are set once and stay valid until changed
 const NO_MAX_AGE = 0;
 const WIND_PATH = 'environment.wind.speedTrue';
+// The signalk-energy-predictor plugin publishes its overall 24 hour energy
+// outlook here as a plain string: "surplus", "rising", "stable", "deficit"
+// or "critical"
+const ENERGY_OUTLOOK_PATH = 'electrical.energy.prediction.status';
+// The signalk-status-tiles plugin publishes each tile's aggregated state as a
+// plain string under this branch, one path per tile id
+const TILE_STATUS_BASE = 'statusTiles.tiles';
 const HISTORY_WINDOW_MINUTES = 10;
 const MS_PER_UNIT = {
   milliseconds: 1,
@@ -165,22 +173,101 @@ function pathUnits(app, path) {
   return data.meta.units;
 }
 
+// The overall energy outlook is a state, not a sensor reading, so it is
+// reported regardless of age. On a boat without the predictor installed the
+// path does not exist and there is nothing to report
+function energyOutlook(app) {
+  const outlook = selfValue(app, ENERGY_OUTLOOK_PATH, NO_MAX_AGE);
+  if (typeof outlook !== 'string' || !outlook) {
+    return undefined;
+  }
+  return outlook;
+}
+
+// Tile states are change-driven publications, so a green tile may not have
+// sent anything in a long time. That is fine: green means nothing needs
+// attention, and there is nothing to go stale about that
+//
+// Neutral tiles have their context inactive ("disabled") and opportunity
+// tiles are good news, so neither counts as a problem or as green. Tile
+// labels live in the tiles configuration, not on the bus, so the reply names
+// tiles by id
+function leafValue(node) {
+  if (node === null || node === undefined) {
+    return undefined;
+  }
+  if (typeof node === 'object' && 'value' in node) {
+    return node.value;
+  }
+  return node;
+}
+
+function tileStatuses(app) {
+  const tiles = selfValue(app, TILE_STATUS_BASE, NO_MAX_AGE);
+  if (!tiles || typeof tiles !== 'object' || Array.isArray(tiles)) {
+    return [];
+  }
+  return Object.keys(tiles)
+    .map((id) => ({ id, state: leafValue(tiles[id]) }))
+    .filter((tile) => typeof tile.state === 'string');
+}
+
+// One line summarising every status tile: which are red or amber when there
+// are any, "all green" when the monitored systems are fine, and nothing at
+// all on a boat without status tiles configured
+function systemsStatus(app) {
+  const tiles = tileStatuses(app);
+  const problems = { red: [], amber: [] };
+  let green = 0;
+  tiles.forEach(({ id, state }) => {
+    if (state === 'red' || state === 'amber') {
+      problems[state].push(id);
+      return;
+    }
+    if (state === 'green') {
+      green += 1;
+    }
+  });
+  const groups = ['red', 'amber']
+    .filter((state) => problems[state].length)
+    .map((state) => `${state} ${problems[state].join(', ')}`);
+  if (groups.length) {
+    return `Systems: ${groups.join('; ')}`;
+  }
+  if (green) {
+    return 'Systems: all green';
+  }
+  return undefined;
+}
+
 // Configured paths are typically state rather than sensor readings, like the
 // active WAN connection, so they are reported regardless of age
 //
 // Paths with no value at all are left out rather than reported as unavailable:
 // the defaults are not something the user asked for, and on a boat that does
 // not measure them a line saying nothing is not worth the airtime
-function configuredStatus(app, settings) {
-  return statusPaths(settings)
+//
+// The energy predictor's overall outlook describes the same house bank the
+// default SoC entry reads, so when available it rides along on that line as
+// "SoC: 100%, surplus". Without the SoC line there is nowhere natural to put
+// the term, so it is left out
+function configuredStatus(app, settings, outlook) {
+  const lines = statusPaths(settings)
     .map(({ path, label }) => {
       const value = selfValue(app, path, NO_MAX_AGE);
       if (value === undefined || value === null || value === '') {
         return undefined;
       }
-      return `${label}: ${formatValue(value, pathUnits(app, path))}`;
+      return { path, text: `${label}: ${formatValue(value, pathUnits(app, path))}` };
     })
-    .filter((line) => line);
+    .filter((entry) => entry);
+  if (outlook) {
+    const soc = lines.find((entry) => entry.path === HOUSE_SOC_PATH);
+    if (soc) {
+      soc.text += `, ${outlook}`;
+    }
+  }
+  return lines.map((entry) => entry.text);
 }
 
 // A text message has to fit the radio, which caps a packet payload at 233
@@ -292,7 +379,11 @@ module.exports = {
       if (history) {
         status.push(`Wind 10m: avg ${knots(history.tenMinutes.average)} max ${knots(history.tenMinutes.max)}kn`);
       }
-      status.push(...configuredStatus(app, settings));
+      status.push(...configuredStatus(app, settings, energyOutlook(app)));
+      const systems = systemsStatus(app);
+      if (systems) {
+        status.push(systems);
+      }
       status.push(nodeStatus(msg, settings));
       // One message where it fits, otherwise several sent in order
       return messagesFor(status).reduce(

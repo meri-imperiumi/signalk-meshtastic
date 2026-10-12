@@ -6,9 +6,11 @@ const DEFAULT_ANCHOR_RADIUS_PATH = 'navigation.anchor.distanceFromBow';
 const DEFAULT_METRICS_INTERVAL = 240;
 // State of charge of the house bank, the same bank the environment metrics
 // report voltage and current for. Reported in the status reply unless the user
-// takes it out of the configured paths
+// takes it out of the configured paths. The energy predictor's overall outlook
+// is appended to this same line
+const HOUSE_SOC_PATH = 'electrical.batteries.house.capacity.stateOfCharge';
 const DEFAULT_STATUS_PATHS = [
-  { path: 'electrical.batteries.house.capacity.stateOfCharge', label: 'SoC' },
+  { path: HOUSE_SOC_PATH, label: 'SoC' },
 ];
 
 function communications(settings) {
@@ -74,4 +76,5 @@ module.exports = {
   sendAlerts,
   statusPaths,
   DEFAULT_STATUS_PATHS,
+  HOUSE_SOC_PATH,
 };
