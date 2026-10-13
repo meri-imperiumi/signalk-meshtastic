@@ -1,5 +1,7 @@
 # Changelog
 ## [Unreleased]
+
+## [1.8.1] - 2026-10-14
 ### Added
 - Command replies are threaded to the command message through the Meshtastic reply id, so client apps render them as replies to the crew member's command
 
