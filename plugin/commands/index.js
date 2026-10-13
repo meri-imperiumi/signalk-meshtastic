@@ -67,8 +67,7 @@ exports.dispatch = (msg, settings, device, app, create, Protobuf, nodeDb, verifi
       msg.id,
     );
   }
-  const publicMatching = matching.filter((name) => !exports[name].crewOnly);
-  if (!publicMatching.length) {
+  if (!matching.length) {
     return fallback.handle(msg, device, available.map((name) => exports[name].example))
       .then((sent) => {
         if (sent) {

@@ -363,7 +363,7 @@ function windHistory(app) {
 }
 
 module.exports = {
-  crewOnly: false,
+  crewOnly: true,
   example: 'Status',
   accept: (msg) => (msg.data.toLowerCase() === 'status'),
   handle: (msg, settings, device, app) => windHistory(app)

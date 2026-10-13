@@ -3,6 +3,12 @@
 ### Added
 - Command replies are threaded to the command message through the Meshtastic reply id, so client apps render them as replies to the crew member's command
 
+### Changed
+- The Status command is now crew-only: nodes not configured as crew get the automated node explanation instead of the boat state, and when command signing is required the reply also only arrives in cryptographically verified packets
+
+### Fixed
+- Crew-only commands (digital switching, waypoints, log entries) are executed again. The 1.8.0 dispatch restructure replied with the automated node explanation, and executed nothing, whenever a message matched only crew commands, so for crew members switching appeared broken while public commands like Status kept working
+
 ## [1.8.0] - 2026-10-12
 ### Added
 - Positions received with reduced precision (Meshtastic 2.8 public channels truncate positions to the precision configured for the channel) are published with their maximum error in meters as `communication.meshtastic.positionAccuracy`, so instrument panels can show the uncertainty instead of a falsely exact fix
